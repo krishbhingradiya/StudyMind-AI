@@ -22,4 +22,3 @@ function getSupabaseClient(token) {
         auth: { autoRefreshToken: false, persistSession: false },
     });
 }
-//# sourceMappingURL=supabase.js.map

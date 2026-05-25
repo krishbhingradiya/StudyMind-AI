@@ -9,4 +9,3 @@ const PORT = env_1.env.port;
 app_1.default.listen(PORT, () => {
     console.log(`StudyMind API running on port ${PORT} [${env_1.env.nodeEnv}]`);
 });
-//# sourceMappingURL=index.js.map

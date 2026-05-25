@@ -51,4 +51,3 @@ function removeMissingColumns(payload, missingColumns) {
     }
     return cleaned;
 }
-//# sourceMappingURL=supabaseSchema.js.map

@@ -47,4 +47,3 @@ exports.env = {
     smtpPass: process.env.SMTP_PASS || "",
     smtpFrom: process.env.SMTP_FROM || "StudyMind AI <noreply@studymindai.com>",
 };
-//# sourceMappingURL=env.js.map

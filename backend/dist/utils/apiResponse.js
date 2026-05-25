@@ -10,4 +10,3 @@ function sendError(res, error, status = 400) {
     const body = { success: false, error };
     return res.status(status).json(body);
 }
-//# sourceMappingURL=apiResponse.js.map

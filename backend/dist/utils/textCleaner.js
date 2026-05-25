@@ -40,4 +40,3 @@ function truncateText(text, maxLength = 12000) {
 function sanitizeMetadataValue(value) {
     return sanitizeForDatabase(value).slice(0, 500);
 }
-//# sourceMappingURL=textCleaner.js.map

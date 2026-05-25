@@ -7,4 +7,3 @@ function scheduleUploadAnalysis(supabase, userId, params) {
         console.warn(`Background analysis failed for upload ${params.uploadId}:`, err);
     });
 }
-//# sourceMappingURL=backgroundAnalysis.js.map

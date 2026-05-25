@@ -75,4 +75,3 @@ function clampMetric(value) {
         return 0;
     return Math.round(Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value)));
 }
-//# sourceMappingURL=quizScoring.js.map

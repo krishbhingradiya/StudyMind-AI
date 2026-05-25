@@ -151,12 +151,15 @@ export async function getUploads(req: AuthenticatedRequest, res: Response) {
       .order("uploaded_at", { ascending: false });
 
     if (error && isMissingColumnError(error)) {
-      ({ data, error } = await supabase
-        .from("uploads")
-        .select(UPLOAD_LIST_SELECT_LEGACY)
-        .eq("user_id", req.user.id)
-        .order("uploaded_at", { ascending: false }));
-    }
+  const legacyResponse: any = await supabase
+    .from("uploads")
+    .select(UPLOAD_LIST_SELECT_LEGACY)
+    .eq("user_id", req.user.id)
+    .order("uploaded_at", { ascending: false });
+
+  data = legacyResponse.data;
+  error = legacyResponse.error;
+}
 
     if (error) return sendError(res, error.message, 500);
     return sendSuccess(res, data);

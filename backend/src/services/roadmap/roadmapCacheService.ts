@@ -24,7 +24,10 @@ export function buildRoadmapCacheKey(input: RoadmapGenerateInput): string {
     syllabusUnits: [...(input.syllabusUnits || [])]
       .map((unit) => ({
         name: unit.name.trim().toLowerCase(),
-        topics: [...(unit.topics || [])].map((t) => t.trim().toLowerCase()).sort(),
+        topics: [...(unit.topics || [])]
+          .map((t) => t.trim().toLowerCase())
+          .sort()
+          .join(", "),
       }))
       .sort((a, b) => a.name.localeCompare(b.name)),
     examTrends: [...(input.examTrends || [])].map((t) => t.trim().toLowerCase()).sort(),
@@ -71,7 +74,7 @@ export async function saveRoadmapCache(
         topic,
         structure,
       },
-      { onConflict: ["cache_key", "user_id"] }
+      { onConflict: "cache_key,user_id" }
     );
   } catch (err) {
     console.warn("Saving roadmap cache failed:", (err as Error).message);

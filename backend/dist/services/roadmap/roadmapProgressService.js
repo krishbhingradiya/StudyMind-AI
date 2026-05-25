@@ -67,4 +67,3 @@ async function unlockFirstTasks(supabase, roadmapId, userId, count = 2) {
             .in("id", tasks.map((t) => t.id));
     }
 }
-//# sourceMappingURL=roadmapProgressService.js.map

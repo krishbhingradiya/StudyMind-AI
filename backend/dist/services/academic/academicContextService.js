@@ -83,4 +83,3 @@ async function buildAcademicContext(supabase, userId) {
         totalStudyHoursFromMaterials,
     };
 }
-//# sourceMappingURL=academicContextService.js.map

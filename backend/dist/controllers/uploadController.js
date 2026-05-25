@@ -119,11 +119,13 @@ async function getUploads(req, res) {
             .eq("user_id", req.user.id)
             .order("uploaded_at", { ascending: false });
         if (error && (0, supabaseSchema_1.isMissingColumnError)(error)) {
-            ({ data, error } = await supabase
+            const legacyResponse = await supabase
                 .from("uploads")
                 .select(UPLOAD_LIST_SELECT_LEGACY)
                 .eq("user_id", req.user.id)
-                .order("uploaded_at", { ascending: false }));
+                .order("uploaded_at", { ascending: false });
+            data = legacyResponse.data;
+            error = legacyResponse.error;
         }
         if (error)
             return (0, apiResponse_1.sendError)(res, error.message, 500);
@@ -155,4 +157,3 @@ async function deleteUpload(req, res) {
         return (0, apiResponse_1.sendError)(res, err.message, 500);
     }
 }
-//# sourceMappingURL=uploadController.js.map

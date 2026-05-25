@@ -986,4 +986,3 @@ function buildFallbackExamPaper(raw, options, analysis) {
         footerNote: "--- End of Predicted Examination Paper (Safely Rendered Fallback) ---"
     };
 }
-//# sourceMappingURL=paperAnalysisService.js.map

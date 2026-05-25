@@ -119,4 +119,3 @@ async function getSummaryById(req, res) {
         return (0, apiResponse_1.sendError)(res, err.message, 500);
     }
 }
-//# sourceMappingURL=summaryController.js.map

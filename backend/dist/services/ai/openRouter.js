@@ -34,4 +34,3 @@ async function callOpenRouter(messages, options, modelOverride, signal) {
     }
     return text;
 }
-//# sourceMappingURL=openRouter.js.map

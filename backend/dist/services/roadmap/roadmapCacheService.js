@@ -29,7 +29,10 @@ function buildRoadmapCacheKey(input) {
         syllabusUnits: [...(input.syllabusUnits || [])]
             .map((unit) => ({
             name: unit.name.trim().toLowerCase(),
-            topics: [...(unit.topics || [])].map((t) => t.trim().toLowerCase()).sort(),
+            topics: [...(unit.topics || [])]
+                .map((t) => t.trim().toLowerCase())
+                .sort()
+                .join(", "),
         }))
             .sort((a, b) => a.name.localeCompare(b.name)),
         examTrends: [...(input.examTrends || [])].map((t) => t.trim().toLowerCase()).sort(),
@@ -62,10 +65,9 @@ async function saveRoadmapCache(supabase, userId, cacheKey, subject, topic, stru
             subject,
             topic,
             structure,
-        }, { onConflict: ["cache_key", "user_id"] });
+        }, { onConflict: "cache_key,user_id" });
     }
     catch (err) {
         console.warn("Saving roadmap cache failed:", err.message);
     }
 }
-//# sourceMappingURL=roadmapCacheService.js.map

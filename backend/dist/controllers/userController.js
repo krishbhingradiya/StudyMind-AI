@@ -126,7 +126,17 @@ async function sendLoginOtp(req, res) {
             password,
         });
         if (authError || !authData.user) {
-            return (0, apiResponse_1.sendError)(res, authError?.message || "Invalid email or password.", 401);
+            // Check if the email exists to give a specific error message
+            const supabase = (0, supabase_1.getSupabaseAdmin)();
+            const { data: existingUser } = await supabase
+                .from("users")
+                .select("id")
+                .eq("email", email.toLowerCase().trim())
+                .maybeSingle();
+            if (existingUser) {
+                return (0, apiResponse_1.sendError)(res, "Incorrect password. Please try again.", 401);
+            }
+            return (0, apiResponse_1.sendError)(res, "No account found with this email address.", 401);
         }
         // Generate OTP
         const { code, cooldownRemaining } = await otpService_1.otpService.createOTP(email);
@@ -252,6 +262,8 @@ async function verifyOtp(req, res) {
             await supabase.auth.admin.deleteUser(authData.user.id);
             return (0, apiResponse_1.sendError)(res, profileError.message, 500);
         }
+        // Send welcome email asynchronously
+        emailService_1.emailService.sendWelcomeEmail(signupData.email, signupData.full_name || "Student").catch(console.error);
         return (0, apiResponse_1.sendSuccess)(res, { user: authData.user, profile: profileData }, "Account created and verified successfully!", 201);
     }
     catch (err) {
@@ -353,4 +365,3 @@ async function resetPassword(req, res) {
         return (0, apiResponse_1.sendError)(res, err.message, 500);
     }
 }
-//# sourceMappingURL=userController.js.map

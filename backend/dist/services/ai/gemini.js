@@ -34,4 +34,3 @@ async function callGemini(prompt, systemInstruction, modelOverride, options, sig
     }
     return text;
 }
-//# sourceMappingURL=gemini.js.map

@@ -53,16 +53,19 @@ function validateQuizAnswer(userAnswer, question) {
         return false;
     }
     // Validate bounds on user's answer
-    if (userAnswerIndex < 0 || userAnswerIndex >= question.options.length) {
-        console.warn(`[QUIZ_VALIDATION] User answer index out of bounds:`, userAnswerIndex, "for question", question.id, "with", question.options.length, "options");
-        return false;
+    if (userAnswerIndex !== null && userAnswerIndex !== undefined) {
+        if (userAnswerIndex < 0 || userAnswerIndex >= question.options.length) {
+            console.warn(`[QUIZ_VALIDATION] User answer index out of bounds:`, userAnswerIndex, "for question", question.id, "with", question.options.length, "options");
+            return false;
+        }
+        // EXACT match check
+        const isCorrect = userAnswerIndex === question.correctAnswerIndex;
+        if (!isCorrect) {
+            console.debug(`[QUIZ_VALIDATION] Incorrect answer for Q${question.id}:`, `User selected index ${userAnswerIndex} (${question.options[userAnswerIndex]}),`, `Correct answer is index ${question.correctAnswerIndex} (${question.options[question.correctAnswerIndex]})`);
+        }
+        return isCorrect;
     }
-    // EXACT match check
-    const isCorrect = userAnswerIndex === question.correctAnswerIndex;
-    if (!isCorrect) {
-        console.debug(`[QUIZ_VALIDATION] Incorrect answer for Q${question.id}:`, `User selected index ${userAnswerIndex} (${question.options[userAnswerIndex]}),`, `Correct answer is index ${question.correctAnswerIndex} (${question.options[question.correctAnswerIndex]})`);
-    }
-    return isCorrect;
+    return false;
 }
 /**
  * Validates that a quiz question has all required fields for proper scoring.
@@ -104,4 +107,3 @@ function logValidationError(questionId, userAnswer, expectedIndex, options, deta
         ...details,
     });
 }
-//# sourceMappingURL=quizValidation.js.map

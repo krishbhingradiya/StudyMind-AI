@@ -61,4 +61,3 @@ async function upsertSubjectFromAnalysis(supabase, userId, params) {
     const { data } = await supabase.from("subjects").insert(payload).select().single();
     return data;
 }
-//# sourceMappingURL=universityIntelligenceService.js.map

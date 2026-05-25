@@ -379,11 +379,11 @@ Analysis metrics:
 - Important chapters: ${analysis.importantChapters.join(", ")}`
     }
   ];
-
+  
   return callAIWithRetry<PredictedExamPaper>(
     messages,
     { maxTokens: 3000, temperature: 0.45, preferFast: true },
-    predictedExamPaperSchema,
+    predictedExamPaperSchema as z.ZodSchema<PredictedExamPaper>,
     (rawText) => buildFallbackExamPaper(rawText, options, analysis)
   );
 }

@@ -15,7 +15,7 @@ async function fetchCompletedQuizzes(supabase, userId) {
         .eq("user_id", userId)
         .not("score", "is", null);
     if (result.error && (0, supabaseSchema_1.isMissingColumnError)(result.error)) {
-        result = await supabase
+        let result = await supabase
             .from("quizzes")
             .select(QUIZ_ANALYTICS_SELECT_LEGACY)
             .eq("user_id", userId)
@@ -125,10 +125,12 @@ async function getDashboardAnalytics(req, res) {
         const weakTopicScore = computeWeakTopicScore(weakTopicsList);
         const studyConsistency = computeStudyConsistency(activities.data || []);
         const quizComponent = avgQuizScore ?? 0;
-        const examReadiness = (0, quizScoring_1.clampMetric)(quizComponent * 0.4 +
-            roadmapProgress * 0.3 +
-            weakTopicScore * 0.2 +
-            studyConsistency * 0.1);
+        const examReadiness = (!hasQuizData && roadmapProgress === 0)
+            ? 0
+            : (0, quizScoring_1.clampMetric)(quizComponent * 0.4 +
+                roadmapProgress * 0.3 +
+                weakTopicScore * 0.2 +
+                studyConsistency * 0.1);
         const weeklyImprovement = computeWeeklyImprovement(scoredQuizzes);
         const topicPerformance = computeTopicPerformance(scoredQuizzes);
         const avgTimeSeconds = completedQuizzes.length > 0
@@ -168,4 +170,3 @@ async function getDashboardAnalytics(req, res) {
         return (0, apiResponse_1.sendError)(res, err.message, 500);
     }
 }
-//# sourceMappingURL=analyticsController.js.map

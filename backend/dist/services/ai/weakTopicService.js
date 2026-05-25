@@ -37,4 +37,3 @@ async function getWeakTopics(userId) {
         throw new Error(error.message);
     return data || [];
 }
-//# sourceMappingURL=weakTopicService.js.map

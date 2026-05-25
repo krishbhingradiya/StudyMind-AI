@@ -23,4 +23,3 @@ async function authMiddleware(req, res, next) {
         return (0, apiResponse_1.sendError)(res, "Authentication failed", 401);
     }
 }
-//# sourceMappingURL=auth.js.map

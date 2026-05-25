@@ -251,12 +251,15 @@ export async function getQuizzes(req: AuthenticatedRequest, res: Response) {
       .order("created_at", { ascending: false });
 
     if (error && isMissingColumnError(error)) {
-      ({ data, error } = await supabase
-        .from("quizzes")
-        .select(QUIZ_LIST_SELECT_LEGACY)
-        .eq("user_id", req.user.id)
-        .order("created_at", { ascending: false }));
-    }
+  const legacyResponse: any = await supabase
+    .from("quizzes")
+    .select(QUIZ_LIST_SELECT_LEGACY)
+    .eq("user_id", req.user.id)
+    .order("created_at", { ascending: false });
+
+  data = legacyResponse.data;
+  error = legacyResponse.error;
+}
 
     if (error) return sendError(res, error.message, 500);
     return sendSuccess(res, data);

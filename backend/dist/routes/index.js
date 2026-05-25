@@ -124,4 +124,3 @@ router.get("/academic/context", auth_1.authMiddleware, academicController.getAca
 router.get("/academic/dashboard", auth_1.authMiddleware, academicController.getAcademicDashboard);
 router.get("/academic/materials", auth_1.authMiddleware, academicController.getMaterialAnalyses);
 exports.default = router;
-//# sourceMappingURL=index.js.map

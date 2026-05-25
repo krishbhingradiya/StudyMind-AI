@@ -21,4 +21,3 @@ function schedulePastPaperAnalysis(supabase, userId, params) {
         console.warn(`Background paper analysis failed for ${params.paperId}:`, err);
     });
 }
-//# sourceMappingURL=backgroundPaperAnalysis.js.map

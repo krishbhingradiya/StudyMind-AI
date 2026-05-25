@@ -84,4 +84,3 @@ ${material}`,
     }
     return questions.map((q, i) => normalizeQuizQuestion(q, i));
 }
-//# sourceMappingURL=quizService.js.map

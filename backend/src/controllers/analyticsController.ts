@@ -25,7 +25,7 @@ async function fetchCompletedQuizzes(supabase: SupabaseClient, userId: string) {
     .not("score", "is", null);
 
   if (result.error && isMissingColumnError(result.error)) {
-    result = await supabase
+    let result: any = await supabase
       .from("quizzes")
       .select(QUIZ_ANALYTICS_SELECT_LEGACY)
       .eq("user_id", userId)

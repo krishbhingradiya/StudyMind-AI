@@ -36,4 +36,3 @@ ${PROMPTS[type]}${pageLimit}`,
     ];
     return (0, aiClient_1.generateAI)(messages, { maxTokens: 4096, temperature: 0.6 });
 }
-//# sourceMappingURL=summaryService.js.map

@@ -11,4 +11,3 @@ function errorHandler(err, _req, res, _next) {
 function notFoundHandler(_req, res) {
     (0, apiResponse_1.sendError)(res, "Route not found", 404);
 }
-//# sourceMappingURL=errorHandler.js.map

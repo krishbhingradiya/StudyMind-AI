@@ -8,9 +8,9 @@ const resend_1 = require("resend");
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const env_1 = require("../config/env");
 class EmailService {
-    resend = null;
-    smtpTransporter = null;
     constructor() {
+        this.resend = null;
+        this.smtpTransporter = null;
         if (env_1.env.smtpHost && env_1.env.smtpUser && env_1.env.smtpPass) {
             try {
                 this.smtpTransporter = nodemailer_1.default.createTransport({
@@ -42,126 +42,81 @@ class EmailService {
         let title = "Verify Your Account";
         let leadText = "Use the verification code below to proceed.";
         if (type === "signup") {
-            title = "Verify Your StudyMind AI Account";
-            leadText = "Welcome to StudyMind AI! Use the verification code below to complete your registration.";
+            title = "Account Verification";
+            leadText = "Thank you for signing up with StudyMind AI. Please enter the verification code below to complete your registration.";
         }
         else if (type === "login") {
-            title = "Verify Your Login Attempt";
-            leadText = "We noticed a login attempt to your StudyMind AI account. Use the verification code below to complete your sign in.";
+            title = "Login Verification";
+            leadText = "A login attempt was made to your StudyMind AI account. Please enter the verification code below to confirm your identity.";
         }
         else if (type === "reset") {
-            title = "Reset Your StudyMind AI Password";
-            leadText = "We received a request to reset your password. Use the verification code below to proceed.";
+            title = "Password Reset";
+            leadText = "We received a request to reset your password. Please enter the verification code below to proceed with the reset.";
         }
         return `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>${title}</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-              background-color: #0d0e12;
-              color: #e2e8f0;
-              margin: 0;
-              padding: 0;
-              -webkit-font-smoothing: antialiased;
-            }
-            .container {
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 40px 20px;
-            }
-            .card {
-              background-color: #151821;
-              border: 1px solid #272a37;
-              border-radius: 16px;
-              padding: 40px;
-              box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            }
-            .logo {
-              font-size: 24px;
-              font-weight: 800;
-              color: #6366f1;
-              text-align: center;
-              margin-bottom: 30px;
-              letter-spacing: -0.5px;
-            }
-            .logo span {
-              color: #f43f5e;
-            }
-            h1 {
-              font-size: 22px;
-              font-weight: 700;
-              color: #ffffff;
-              text-align: center;
-              margin-top: 0;
-              margin-bottom: 16px;
-            }
-            p {
-              font-size: 15px;
-              line-height: 1.6;
-              color: #94a3b8;
-              text-align: center;
-              margin-bottom: 30px;
-            }
-            .otp-container {
-              text-align: center;
-              margin: 30px 0;
-            }
-            .otp-code {
-              font-family: 'Courier New', Courier, monospace;
-              font-size: 36px;
-              font-weight: 800;
-              letter-spacing: 6px;
-              color: #ffffff;
-              background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
-              border: 1px solid #4f46e5;
-              padding: 16px 32px;
-              border-radius: 12px;
-              display: inline-block;
-              box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
-            }
-            .footer {
-              text-align: center;
-              margin-top: 40px;
-              font-size: 12px;
-              color: #475569;
-            }
-            .warning {
-              font-size: 13px;
-              color: #f43f5e;
-              background-color: rgba(244, 63, 94, 0.1);
-              border: 1px solid rgba(244, 63, 94, 0.2);
-              border-radius: 8px;
-              padding: 12px;
-              margin-top: 24px;
-              text-align: center;
-            }
-          </style>
         </head>
-        <body>
-          <div class="container">
-            <div class="card">
-              <div class="logo">StudyMind<span>AI</span></div>
-              <h1>${title}</h1>
-              <p>${leadText}</p>
-              
-              <div class="otp-container">
-                <span class="otp-code">${otp}</span>
-              </div>
-              
-              <p style="font-size: 13px; margin-bottom: 0;">This code is only valid for <strong>5 minutes</strong>. For security, do not share this code with anyone.</p>
-              
-              <div class="warning">
-                If you did not request this code, you can safely ignore this email.
-              </div>
-            </div>
-            <div class="footer">
-              &copy; ${new Date().getFullYear()} StudyMind AI. All rights reserved.
-            </div>
-          </div>
+        <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f5f7;">
+            <tr>
+              <td align="center" style="padding: 48px 20px;">
+                <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width: 560px; width: 100%;">
+                  
+                  <!-- Logo -->
+                  <tr>
+                    <td align="center" style="padding-bottom: 32px;">
+                      <span style="font-size: 22px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.3px;">StudyMind<span style="color: #4f46e5;">AI</span></span>
+                    </td>
+                  </tr>
+
+                  <!-- Main Card -->
+                  <tr>
+                    <td style="background-color: #ffffff; border: 1px solid #e2e5ea; border-radius: 8px; padding: 40px 36px;">
+                      
+                      <!-- Title -->
+                      <h1 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 600; color: #1a1a2e; text-align: center;">${title}</h1>
+                      
+                      <!-- Lead Text -->
+                      <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 1.7; color: #5a5f72; text-align: center;">${leadText}</p>
+                      
+                      <!-- OTP Code -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" style="padding: 24px 0;">
+                            <div style="display: inline-block; background-color: #f8f9fb; border: 1px solid #e2e5ea; border-radius: 6px; padding: 16px 36px;">
+                              <span style="font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #1a1a2e;">${otp}</span>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Expiry Notice -->
+                      <p style="margin: 24px 0 0 0; font-size: 13px; line-height: 1.6; color: #5a5f72; text-align: center;">This code expires in <strong style="color: #1a1a2e;">5 minutes</strong>. For your security, please do not share this code with anyone.</p>
+                      
+                      <!-- Divider -->
+                      <hr style="border: none; border-top: 1px solid #eef0f3; margin: 28px 0;">
+                      
+                      <!-- Disclaimer -->
+                      <p style="margin: 0; font-size: 12px; line-height: 1.6; color: #8b8fa3; text-align: center;">If you did not request this code, no action is needed. Your account remains secure.</p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td align="center" style="padding: 28px 0 0 0;">
+                      <p style="margin: 0; font-size: 12px; color: #9ca0ae;">&copy; ${new Date().getFullYear()} StudyMind AI. All rights reserved.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
         </body>
       </html>
     `;
@@ -188,6 +143,7 @@ class EmailService {
                     from: env_1.env.smtpFrom,
                     to: email,
                     subject: subject,
+                    text: `Your StudyMind AI Verification Code is: ${otp}. It is valid for 5 minutes.`,
                     html: html,
                 });
                 console.log(`[EmailService] Email successfully sent to ${email} via SMTP`);
@@ -230,6 +186,117 @@ class EmailService {
         console.log("\n");
         return true;
     }
+    async sendWelcomeEmail(email, name) {
+        const subject = "Welcome to StudyMind AI";
+        const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Welcome to StudyMind AI</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f5f7;">
+            <tr>
+              <td align="center" style="padding: 48px 20px;">
+                <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width: 560px; width: 100%;">
+                  
+                  <!-- Logo -->
+                  <tr>
+                    <td align="center" style="padding-bottom: 32px;">
+                      <span style="font-size: 22px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.3px;">StudyMind<span style="color: #4f46e5;">AI</span></span>
+                    </td>
+                  </tr>
+
+                  <!-- Main Card -->
+                  <tr>
+                    <td style="background-color: #ffffff; border: 1px solid #e2e5ea; border-radius: 8px; padding: 40px 36px;">
+                      
+                      <!-- Greeting -->
+                      <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a2e; text-align: center;">Welcome, ${name}</h1>
+                      
+                      <p style="margin: 0 0 28px 0; font-size: 14px; line-height: 1.7; color: #5a5f72; text-align: center;">Your account has been successfully created. StudyMind AI is designed to help you study smarter with intelligent tools tailored to your learning needs.</p>
+                      
+                      <!-- Divider -->
+                      <hr style="border: none; border-top: 1px solid #eef0f3; margin: 0 0 28px 0;">
+                      
+                      <!-- Features -->
+                      <p style="margin: 0 0 16px 0; font-size: 13px; font-weight: 600; color: #1a1a2e; text-transform: uppercase; letter-spacing: 0.5px;">What you can do</p>
+                      
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                        <tr>
+                          <td style="padding: 10px 0; border-bottom: 1px solid #f0f1f4;">
+                            <strong style="font-size: 13px; color: #1a1a2e;">AI-Powered Insights</strong>
+                            <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7084; line-height: 1.5;">Analyze your study materials and extract key concepts instantly.</p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 10px 0; border-bottom: 1px solid #f0f1f4;">
+                            <strong style="font-size: 13px; color: #1a1a2e;">Smart Quizzes</strong>
+                            <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7084; line-height: 1.5;">Test your knowledge with dynamically generated assessments.</p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 10px 0; border-bottom: 1px solid #f0f1f4;">
+                            <strong style="font-size: 13px; color: #1a1a2e;">Personalized Roadmaps</strong>
+                            <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7084; line-height: 1.5;">Get a tailored study plan based on your progress and weak areas.</p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 10px 0;">
+                            <strong style="font-size: 13px; color: #1a1a2e;">Handwriting Recognition</strong>
+                            <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7084; line-height: 1.5;">Convert your handwritten notes to structured digital text.</p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- CTA Button -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" style="padding: 4px 0 24px 0;">
+                            <a href="${env_1.env.frontendUrl || 'http://localhost:3000'}/dashboard" style="display: inline-block; background-color: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 6px; font-weight: 600; font-size: 14px;">Open Dashboard</a>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Closing -->
+                      <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #8b8fa3; text-align: center;">If you have any questions, feel free to reach out to our support team. We're here to help.</p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td align="center" style="padding: 28px 0 0 0;">
+                      <p style="margin: 0; font-size: 12px; color: #9ca0ae;">&copy; ${new Date().getFullYear()} StudyMind AI. All rights reserved.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+        const text = `Welcome to StudyMind AI, ${name}.\n\nYour account has been successfully created. StudyMind AI is designed to help you study smarter with AI-powered insights, smart quizzes, personalized roadmaps, and handwriting recognition.\n\nHead over to your dashboard to get started.`;
+        if (this.smtpTransporter) {
+            try {
+                await this.smtpTransporter.sendMail({
+                    from: env_1.env.smtpFrom,
+                    to: email,
+                    subject: subject,
+                    text: text,
+                    html: html,
+                });
+                console.log(`[EmailService] Welcome email sent to ${email}`);
+                return true;
+            }
+            catch (err) {
+                console.error("[EmailService] Failed to send welcome email:", err);
+            }
+        }
+        return false;
+    }
 }
 exports.emailService = new EmailService();
-//# sourceMappingURL=emailService.js.map

@@ -6,9 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.otpService = void 0;
 const crypto_1 = __importDefault(require("crypto"));
 class OTPService {
-    // Memory store for OTPs
-    store = new Map();
     constructor() {
+        // Memory store for OTPs
+        this.store = new Map();
         // Periodically clean up expired OTPs every 5 minutes
         setInterval(() => this.cleanup(), 5 * 60 * 1000);
     }
@@ -117,4 +117,3 @@ class OTPService {
     }
 }
 exports.otpService = new OTPService();
-//# sourceMappingURL=otpService.js.map

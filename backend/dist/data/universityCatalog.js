@@ -62,4 +62,3 @@ function findUniversitySeed(name) {
         u.university_name.toLowerCase().includes(n) ||
         n.includes(u.university_name.toLowerCase()));
 }
-//# sourceMappingURL=universityCatalog.js.map

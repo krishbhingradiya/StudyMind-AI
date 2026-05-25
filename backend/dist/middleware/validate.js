@@ -13,4 +13,3 @@ function validateBody(schema) {
         next();
     };
 }
-//# sourceMappingURL=validate.js.map
