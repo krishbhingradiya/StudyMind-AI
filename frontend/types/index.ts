@@ -53,7 +53,7 @@ export interface Quiz {
   percentage_score?: number | null;
   difficulty?: string | null;
   time_taken_seconds?: number | null;
-  answers?: Record<string, number | string> | null;
+  answers?: Record<string, string> | null;
   created_at: string;
 }
 

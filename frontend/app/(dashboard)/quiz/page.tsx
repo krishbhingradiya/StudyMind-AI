@@ -186,7 +186,7 @@ export default function QuizPage() {
   }
 
   if (viewMode === "review" && activeQuiz?.questions?.length) {
-    const savedAnswers = (activeQuiz.answers as Record<string, string>) || {};
+    const savedAnswers = activeQuiz.answers || {};
     return (
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -7,7 +7,7 @@ import type { QuizQuestion } from "@/types";
 
 interface QuizPlayerProps {
   questions: QuizQuestion[];
-  onSubmit: (answers: Record<string, number | string>, timeTaken: number) => Promise<void>;
+  onSubmit: (answers: Record<string, string>, timeTaken: number) => Promise<void>;
   readOnly?: boolean;
 }
 
@@ -27,7 +27,11 @@ export function QuizPlayer({ questions, onSubmit, readOnly }: QuizPlayerProps) {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    await onSubmit(answers, seconds);
+    const stringAnswers: Record<string, string> = {};
+    for (const [key, val] of Object.entries(answers)) {
+      stringAnswers[key] = String(val);
+    }
+    await onSubmit(stringAnswers, seconds);
     setSubmitting(false);
   };
 
