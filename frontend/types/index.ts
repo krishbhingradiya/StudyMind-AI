@@ -91,6 +91,7 @@ export interface VerifiedRoadmapTask {
   description?: string;
   sort_order?: number;
   completed_at?: string;
+  metadata?: { week?: string | number; [key: string]: any } | null;
 }
 
 export interface RoadmapTask {
@@ -100,6 +101,12 @@ export interface RoadmapTask {
   completed: boolean;
   dueDate?: string;
   priority: "low" | "medium" | "high";
+}
+
+export interface RoadmapEnhancement {
+  strategy?: string;
+  weakTopicTips?: string[];
+  motivation?: string;
 }
 
 export interface Roadmap {
@@ -120,11 +127,9 @@ export interface Roadmap {
   streak_days?: number;
   tasks?: VerifiedRoadmapTask[];
   config?: {
-    enhancements?: {
-      strategy?: string;
-      weakTopicTips?: string[];
-      motivation?: string;
-    };
+    estimatedStudyHours?: number;
+    weakTopics?: string[];
+    enhancements?: RoadmapEnhancement;
   };
   created_at: string;
 }

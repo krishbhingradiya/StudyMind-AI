@@ -29,7 +29,7 @@ export default function SettingsPage() {
   const { profile } = useProfile();
   const setProfile = useAuthStore((state) => state.setProfile);
   const { theme, setTheme } = useTheme();
-  const { register, handleSubmit, reset } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, reset } = useForm<FormData>({ resolver: zodResolver(schema) as any });
   
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

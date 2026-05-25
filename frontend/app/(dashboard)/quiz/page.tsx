@@ -178,7 +178,7 @@ export default function QuizPage() {
         </div>
         <QuizPlayer
           key={playerKey}
-          questions={activeQuiz.questions}
+          questions={activeQuiz.questions || []}
           onSubmit={submit}
         />
       </div>
@@ -200,7 +200,7 @@ export default function QuizPage() {
         </div>
         <QuizReview
           quiz={activeQuiz}
-          questions={activeQuiz.questions}
+          questions={activeQuiz.questions || []}
           answers={savedAnswers}
         />
       </div>

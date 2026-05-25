@@ -96,7 +96,7 @@ export function RoadmapVerifyModal({ task, onClose, onComplete }: Props) {
                   </p>
                   <div className="grid gap-2">
                     {question.options?.map((opt, optIdx) => {
-                      const isSelected = answers[question.id] === optIdx.toString() || answers[question.id] === optIdx;
+                      const isSelected = answers[question.id] === optIdx.toString();
                       return (
                         <button
                           key={optIdx}

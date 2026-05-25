@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/services/api";
-import type { RoadmapContext } from "@/types";
+
 
 const contextSchema = z.object({
   university: z.string().min(2, "University is required"),
@@ -40,7 +40,7 @@ export function RoadmapContextForm({ onSubmit, loading = false }: Props) {
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
 
   const methods = useForm<RoadmapContextFormData>({
-    resolver: zodResolver(contextSchema),
+    resolver: zodResolver(contextSchema) as any,
     defaultValues: {
       university: "",
       semester: 1,

@@ -50,7 +50,7 @@ const slideVariants = {
     scale: 1,
     transition: {
       duration: 0.45,
-      ease: [0.25, 1, 0.5, 1],
+      ease: [0.25, 1, 0.5, 1] as const,
     },
   },
   exit: (direction: number) => ({
@@ -60,7 +60,7 @@ const slideVariants = {
     scale: 0.96,
     transition: {
       duration: 0.4,
-      ease: [0.25, 1, 0.5, 1],
+      ease: [0.25, 1, 0.5, 1] as const,
     },
   }),
 };
