@@ -1,0 +1,787 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --primary: 262 83% 58%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 262 83% 58%;
+  --radius: 0.75rem;
+  --notebook-line-step: 2.25rem;
+  --notebook-font-size: 1.375rem;
+  --notebook-line-height: 2.25rem;
+  --notebook-letter-spacing: 0.025em;
+  --notebook-ink: #2a2926;
+  --notebook-ink-muted: #4a4844;
+  --notebook-paper: #faf8f4;
+  --notebook-paper-end: #f2efe8;
+  --notebook-rule: rgba(168, 158, 140, 0.32);
+  --notebook-margin-line: rgba(214, 118, 118, 0.42);
+  --notebook-padding-top: 3.25rem;
+  --notebook-padding-bottom: 3.5rem;
+  --notebook-padding-right: 2.75rem;
+  --notebook-margin-left: 3.5rem;
+  --notebook-content-gap: 0.85em;
+  --notebook-section-gap: 1.75em;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 6%;
+  --card-foreground: 0 0% 98%;
+  --primary: 263 70% 65%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62% 50%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 263 70% 65%;
+  --notebook-ink: #ebe6dc;
+  --notebook-ink-muted: #c9c2b6;
+  --notebook-paper: #2c2a24;
+  --notebook-paper-end: #222018;
+  --notebook-rule: rgba(90, 85, 72, 0.45);
+  --notebook-margin-line: rgba(200, 110, 110, 0.35);
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-handwriting: var(--font-caveat);
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.glass {
+  @apply border border-border/50 bg-card/40 backdrop-blur-xl;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent;
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(to right, hsl(var(--border) / 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--border) / 0.3) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ─── Premium Immersive Notebook Styling ─── */
+
+:root {
+  --notebook-line-step: 2rem;
+  --notebook-line-height: 2rem;
+  --notebook-font-size: 1.25rem;
+  --notebook-letter-spacing: 0.02em;
+  
+  /* Ink Colors */
+  --ink-fountain-blue: #1d4ed8;
+  --ink-gel-black: #111827;
+  --ink-crimson-red: #be123c;
+  --ink-forest-green: #15803d;
+  
+  /* Current Active Ink & Settings */
+  --notebook-ink: var(--ink-fountain-blue);
+  --notebook-ink-muted: #5e6b7e;
+  --notebook-paper: #faf8f5;
+  --notebook-paper-end: #f3efe6;
+  --notebook-rule: rgba(191, 180, 161, 0.4);
+  --notebook-margin-line: rgba(220, 38, 38, 0.45);
+  
+  --notebook-padding-top: 3.5rem;
+  --notebook-padding-bottom: 3.5rem;
+  --notebook-padding-right: 2.5rem;
+  --notebook-margin-left: 3rem;
+  
+  /* Leather Cover colors */
+  --notebook-cover-bg: linear-gradient(135deg, #4b382a 0%, #2f2219 100%);
+  --notebook-cover-border: #1f140e;
+}
+
+.dark {
+  --notebook-line-step: 2rem;
+  --notebook-line-height: 2rem;
+  --notebook-font-size: 1.25rem;
+  
+  /* Ink Colors Dark Mode (silver, gold, white, light pastel blue) */
+  --ink-fountain-blue: #a5f3fc; /* gel blue/silver */
+  --ink-gel-black: #f3f4f6; /* white ink */
+  --ink-crimson-red: #fda4af; /* pastel pink/red */
+  --ink-forest-green: #86efac; /* pastel green */
+  
+  --notebook-ink: var(--ink-fountain-blue);
+  --notebook-ink-muted: #8e8d89;
+  --notebook-paper: #22201c;
+  --notebook-paper-end: #1a1815;
+  --notebook-rule: rgba(100, 95, 85, 0.5);
+  --notebook-margin-line: rgba(239, 68, 68, 0.35);
+  
+  /* Leather Cover colors in dark mode */
+  --notebook-cover-bg: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  --notebook-cover-border: #030712;
+}
+
+.notebook-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 0 1rem 3rem;
+}
+
+.notebook-header {
+  width: 100%;
+  max-width: 1200px;
+  text-align: center;
+}
+
+.notebook-title {
+  font-family: var(--font-handwriting), cursive;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  color: hsl(var(--foreground) / 0.95);
+}
+
+.notebook-subtitle {
+  margin-top: 0.35rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.notebook-footer {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  text-align: center;
+}
+
+/* ─── Premium Leather/Canvas Binder Container ─── */
+.notebook-binder-container {
+  position: relative;
+  background: var(--notebook-cover-bg);
+  border: 8px solid var(--notebook-cover-border);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    inset 0 2px 5px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.4);
+  border-radius: 16px;
+  padding: 2.25rem 1.75rem;
+  width: 100%;
+  max-width: 1150px;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.notebook-binder-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  background: linear-gradient(to right, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.15) 30%, rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.15) 70%, rgba(0,0,0,0.45) 100%);
+  box-shadow: inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(0,0,0,0.3);
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Metal Spiral Rings Overlap */
+.notebook-spiral-ring {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 16px;
+  background: linear-gradient(180deg, #e5e7eb 0%, #9ca3af 30%, #4b5563 70%, #f3f4f6 100%);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  z-index: 15;
+}
+
+.notebook-spiral-ring::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: -2px;
+  width: 8px;
+  height: 20px;
+  background: #111;
+  opacity: 0.75;
+  border-radius: 50%;
+  z-index: -1;
+  filter: blur(1px);
+}
+
+.notebook-spiral-ring::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: -2px;
+  width: 8px;
+  height: 20px;
+  background: #111;
+  opacity: 0.75;
+  border-radius: 50%;
+  z-index: -1;
+  filter: blur(1px);
+}
+
+/* Left Margin Spiral for Single-Page/Mobile Mode */
+.notebook-spiral-left {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 10px;
+  width: 20px;
+  background: linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.2) 100%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.notebook-left-ring {
+  position: absolute;
+  left: 2px;
+  width: 32px;
+  height: 14px;
+  background: linear-gradient(180deg, #e5e7eb 0%, #9ca3af 30%, #4b5563 70%, #f3f4f6 100%);
+  border-radius: 8px;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.35);
+  z-index: 15;
+}
+
+/* ─── A4 notebook page aspect-ratio layout ─── */
+.notebook-page {
+  position: relative;
+  width: 100%;
+  background-color: var(--notebook-paper);
+  background-image: linear-gradient(180deg, var(--notebook-paper) 0%, var(--notebook-paper-end) 100%);
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 0 40px rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.notebook-page--paged {
+  aspect-ratio: 210 / 297;
+  max-height: 297mm;
+  height: 297mm;
+}
+
+.paper-ruled {
+  background-image: 
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent calc(var(--notebook-line-step) - 1px),
+      var(--notebook-rule) calc(var(--notebook-line-step) - 1px),
+      var(--notebook-rule) var(--notebook-line-step)
+    ),
+    linear-gradient(180deg, var(--notebook-paper) 0%, var(--notebook-paper-end) 100%);
+  background-position: 0 var(--notebook-padding-top);
+  background-size: 100% var(--notebook-line-step);
+}
+
+.paper-grid {
+  background-image: 
+    linear-gradient(to right, var(--notebook-rule) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--notebook-rule) 1px, transparent 1px),
+    linear-gradient(180deg, var(--notebook-paper) 0%, var(--notebook-paper-end) 100%);
+  background-size: calc(var(--notebook-line-step) / 2) calc(var(--notebook-line-step) / 2);
+  background-position: 0 var(--notebook-padding-top);
+}
+
+.paper-dotted {
+  background-image: 
+    radial-gradient(var(--notebook-rule) 1.5px, transparent 1.5px),
+    linear-gradient(180deg, var(--notebook-paper) 0%, var(--notebook-paper-end) 100%);
+  background-size: calc(var(--notebook-line-step) / 2) calc(var(--notebook-line-step) / 2);
+  background-position: 0 var(--notebook-padding-top);
+}
+
+.paper-blank {
+  background-image: linear-gradient(180deg, var(--notebook-paper) 0%, var(--notebook-paper-end) 100%);
+}
+
+/* Margin Red Line */
+.notebook-page.has-margin-line::before {
+  content: "";
+  position: absolute;
+  left: var(--notebook-margin-left);
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background: var(--notebook-margin-line);
+  z-index: 2;
+}
+
+/* Pulpy/Texture Paper Overlay */
+.notebook-paper-texture {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(rgba(0,0,0,0.015) 1px, transparent 0), 
+    radial-gradient(rgba(0,0,0,0.01) 1px, transparent 0);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  z-index: 5;
+}
+
+/* Content Area inside A4 page */
+.notebook-page-body {
+  position: absolute;
+  inset: var(--notebook-padding-top) var(--notebook-padding-right) var(--notebook-padding-bottom) calc(var(--notebook-margin-left) + 1.25rem);
+  overflow: hidden;
+  z-index: 3;
+}
+
+.notebook-page-number {
+  position: absolute;
+  bottom: 1rem;
+  right: 1.5rem;
+  font-family: var(--font-handwriting), cursive;
+  font-size: 1rem;
+  color: var(--notebook-ink-muted);
+  opacity: 0.8;
+  z-index: 6;
+}
+
+/* ─── Strict Vertical Rhythm Baseline Typography ─── */
+.handwriting-content {
+  font-family: var(--font-handwriting), cursive;
+  font-size: var(--notebook-font-size);
+  line-height: var(--notebook-line-height);
+  letter-spacing: var(--notebook-letter-spacing);
+  color: var(--notebook-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.handwriting-prose {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.handwriting-prose > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.handwriting-prose p {
+  min-height: var(--notebook-line-height);
+  line-height: var(--notebook-line-height);
+  margin-bottom: 0;
+  position: relative;
+}
+
+/* Headings occupy multiples of baseline units to preserve line locking */
+.handwriting-prose h1,
+.handwriting-prose h2,
+.handwriting-prose h3,
+.handwriting-prose h4 {
+  font-family: var(--font-handwriting), cursive;
+  font-weight: 700;
+  color: var(--notebook-ink);
+  letter-spacing: 0.01em;
+  margin: 0 !important;
+}
+
+.handwriting-prose h1 {
+  font-size: 1.75em;
+  line-height: 1.3;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px dashed var(--notebook-rule);
+  margin-bottom: 1.5rem !important;
+  color: var(--ink-crimson-red);
+}
+
+.handwriting-prose h2 {
+  font-size: 1.45em;
+  line-height: 1.3;
+  color: var(--ink-forest-green);
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.handwriting-prose h3 {
+  font-size: 1.25em;
+  line-height: 1.3;
+  color: var(--notebook-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+
+.handwriting-prose strong {
+  font-weight: 700;
+  /* Translucent highlighter effect for bold text */
+  background: linear-gradient(120deg, rgba(254, 240, 138, 0.4) 0%, rgba(254, 240, 138, 0.8) 100%);
+  padding: 0 0.25rem;
+  border-radius: 4px;
+  display: inline-block;
+  line-height: 1.1;
+  color: inherit;
+}
+
+.handwriting-prose em {
+  font-style: italic;
+  text-decoration: underline wavy rgba(191, 180, 161, 0.8);
+  text-underline-offset: 4px;
+}
+
+.handwriting-prose a {
+  color: var(--ink-fountain-blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.handwriting-prose ul,
+.handwriting-prose ol {
+  margin: 0 !important;
+  padding-left: 1.75rem;
+}
+
+.handwriting-prose li {
+  line-height: var(--notebook-line-height);
+  min-height: var(--notebook-line-height);
+  margin-bottom: 0;
+  position: relative;
+  list-style-type: none; /* custom bullet to align properly */
+}
+
+/* Custom handwritten bullets */
+.handwriting-prose ul li::before {
+  content: "•";
+  position: absolute;
+  left: -1.25rem;
+  font-size: 1.25rem;
+  color: var(--notebook-ink-muted);
+}
+
+.handwriting-prose ol {
+  counter-reset: custom-counter;
+}
+
+.handwriting-prose ol li::before {
+  counter-increment: custom-counter;
+  content: counter(custom-counter) ".";
+  position: absolute;
+  left: -1.5rem;
+  font-size: 1em;
+  color: var(--notebook-ink-muted);
+}
+
+.handwriting-prose blockquote {
+  margin: 0 !important;
+  padding-left: 1rem;
+  border-left: 3px solid var(--notebook-rule);
+  color: var(--notebook-ink-muted);
+  font-style: italic;
+}
+
+/* Code block style that aligns with writing lines */
+.handwriting-prose code {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.85em;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--notebook-ink);
+}
+
+.dark .handwriting-prose code {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.handwriting-prose pre {
+  margin: 0.5rem 0 !important;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px dashed var(--notebook-rule);
+  border-radius: 8px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+.dark .handwriting-prose pre {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Hand-drawn Table */
+.handwriting-prose table {
+  width: 100%;
+  margin: 0.5rem 0 !important;
+  border-collapse: collapse;
+  line-height: var(--notebook-line-height);
+}
+
+.handwriting-prose th,
+.handwriting-prose td {
+  padding: 0.25rem 0.5rem;
+  border: 1.5px dashed var(--notebook-rule);
+  text-align: left;
+}
+
+.handwriting-prose th {
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.02);
+  color: var(--ink-crimson-red);
+}
+
+.dark .handwriting-prose th {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Math displays */
+.handwriting-prose .katex-display {
+  margin: 0 !important;
+  padding: 0.25rem 0;
+  line-height: var(--notebook-line-height);
+}
+
+/* ─── Immersive Page-Flip Layout ─── */
+.notebook-page-viewport {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+/* Layout modes */
+.notebook-layout-double {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--notebook-cover-bg);
+  padding: 1rem;
+  border-radius: 8px;
+  gap: 0;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* Left/Right double-page splits */
+.notebook-page-left {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.notebook-page-right {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Sticky Note Widget */
+.notebook-sticky-note {
+  position: absolute;
+  width: 160px;
+  min-height: 160px;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #fef08a 0%, #fde047 100%);
+  box-shadow: 2px 5px 12px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255,255,255,0.4);
+  border-radius: 2px 2px 2px 14px;
+  transform: rotate(-3deg);
+  font-family: var(--font-handwriting), cursive;
+  font-size: 1.05rem;
+  color: #451a03;
+  z-index: 10;
+  top: 15%;
+  right: 4%;
+  border-top: 8px solid rgba(0, 0, 0, 0.04);
+}
+
+.notebook-sticky-note::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 30%;
+  right: 30%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-8px);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.notebook-sticky-note--blue {
+  background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%);
+  color: #0369a1;
+}
+
+.notebook-sticky-note--pink {
+  background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%);
+  color: #be185d;
+}
+
+/* Highlight overlay marker classes */
+.marker-yellow {
+  background: rgba(253, 224, 71, 0.35);
+  padding: 0 0.15rem;
+  border-radius: 3px;
+}
+
+.marker-pink {
+  background: rgba(244, 114, 182, 0.35);
+  padding: 0 0.15rem;
+  border-radius: 3px;
+}
+
+/* Pagination Hidden Measure Utility */
+.notebook-measure {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  width: 100%;
+}
+
+.notebook-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+  width: 100%;
+}
+
+.notebook-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  max-width: 12rem;
+}
+
+.notebook-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgba(156, 163, 175, 0.4);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.notebook-dot:hover {
+  background: hsl(var(--primary) / 0.5);
+  transform: scale(1.15);
+}
+
+.notebook-dot--active {
+  background: hsl(var(--primary));
+  transform: scale(1.25);
+}
+
+.notebook-hint {
+  margin-top: 0.5rem;
+}
+
+/* Responsive Overrides */
+@media (max-width: 900px) {
+  .notebook-binder-container {
+    padding: 1rem 0.5rem;
+    border-width: 4px;
+    border-radius: 8px;
+  }
+  
+  .notebook-page--paged {
+    height: auto;
+    aspect-ratio: auto;
+    max-height: none;
+  }
+  
+  .notebook-page-body {
+    position: relative;
+    inset: auto;
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* Print view styling overrides */
+@media print {
+  .notebook-binder-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .notebook-binder-spine,
+  .notebook-spiral-ring,
+  .notebook-spiral-left,
+  .notebook-left-ring,
+  .notebook-controls,
+  .notebook-hint,
+  .notebook-footer {
+    display: none !important;
+  }
+
+  .notebook-page {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    page-break-after: always !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    aspect-ratio: auto !important;
+  }
+}
+
