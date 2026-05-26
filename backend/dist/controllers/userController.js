@@ -138,8 +138,8 @@ async function sendLoginOtp(req, res) {
             }
             return (0, apiResponse_1.sendError)(res, "No account found with this email address.", 401);
         }
-        // Generate OTP
-        const { code, cooldownRemaining } = await otpService_1.otpService.createOTP(email);
+        // Generate OTP — store the password so verifyLoginOtp can create a session
+        const { code, cooldownRemaining } = await otpService_1.otpService.createOTP(email, { password });
         if (cooldownRemaining > 0) {
             return (0, apiResponse_1.sendError)(res, `Please wait ${cooldownRemaining} seconds before requesting another code.`, 429);
         }
@@ -167,7 +167,37 @@ async function verifyLoginOtp(req, res) {
         if (!result.success) {
             return (0, apiResponse_1.sendError)(res, result.error || "Invalid or expired verification code.", 400);
         }
-        return (0, apiResponse_1.sendSuccess)(res, null, "Verification successful!");
+        // Sign in with Supabase to get session tokens
+        const storedData = result.signupData;
+        if (storedData?.password) {
+            try {
+                const tempClient = (0, supabase_js_1.createClient)(env_1.env.supabaseUrl, env_1.env.supabaseAnonKey || env_1.env.supabaseServiceKey, {
+                    auth: { autoRefreshToken: false, persistSession: false },
+                });
+                const { data: authData, error: signInError } = await tempClient.auth.signInWithPassword({
+                    email: email.toLowerCase().trim(),
+                    password: storedData.password,
+                });
+                if (!signInError && authData?.session) {
+                    return (0, apiResponse_1.sendSuccess)(res, {
+                        session: {
+                            access_token: authData.session.access_token,
+                            refresh_token: authData.session.refresh_token,
+                            expires_in: authData.session.expires_in,
+                            expires_at: authData.session.expires_at,
+                        },
+                        user: authData.user,
+                    }, "Login successful!");
+                }
+                // If sign-in failed, log and fall through to basic success
+                console.error("[verifyLoginOtp] signInWithPassword failed after OTP verify:", signInError?.message);
+            }
+            catch (err) {
+                console.error("[verifyLoginOtp] Exception during sign-in:", err.message);
+            }
+        }
+        // Fallback: OTP was valid but couldn't create session server-side
+        return (0, apiResponse_1.sendSuccess)(res, { verified: true }, "Verification successful!");
     }
     catch (err) {
         return (0, apiResponse_1.sendError)(res, err.message, 500);
@@ -300,9 +330,31 @@ async function verifyOtp(req, res) {
             console.error("[verifyOtp] Profile error:", profileError.message);
             return (0, apiResponse_1.sendError)(res, "Failed to create user profile. Please try again.", 500);
         }
+        // Try to sign in to generate session tokens so the frontend can login directly
+        let session = null;
+        try {
+            const tempClient = (0, supabase_js_1.createClient)(env_1.env.supabaseUrl, env_1.env.supabaseAnonKey || env_1.env.supabaseServiceKey, {
+                auth: { autoRefreshToken: false, persistSession: false },
+            });
+            const { data: signInData, error: signInError } = await tempClient.auth.signInWithPassword({
+                email: signupData.email.toLowerCase().trim(),
+                password: signupData.password,
+            });
+            if (!signInError && signInData?.session) {
+                session = {
+                    access_token: signInData.session.access_token,
+                    refresh_token: signInData.session.refresh_token,
+                    expires_in: signInData.session.expires_in,
+                    expires_at: signInData.session.expires_at,
+                };
+            }
+        }
+        catch (err) {
+            console.error("[verifyOtp] Exception during sign-in:", err.message);
+        }
         // Send welcome email asynchronously
         emailService_1.emailService.sendWelcomeEmail(signupData.email, signupData.full_name || "Student").catch(console.error);
-        return (0, apiResponse_1.sendSuccess)(res, { user: authData.user, profile: profileData }, "Account created and verified successfully!", 201);
+        return (0, apiResponse_1.sendSuccess)(res, { user: authData.user, profile: profileData, session }, "Account created and verified successfully!", 201);
     }
     catch (err) {
         const errMsg = err.message || "";

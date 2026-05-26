@@ -104,17 +104,36 @@ export default function SignupPage() {
         return;
       }
 
-      // Log in automatically since verification was successful
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      let signedIn = false;
 
-      if (signInError) {
-        toast.error("Account verified successfully! Please log in manually.");
-        router.push("/login");
-        return;
+      // If backend returned session tokens, use them directly
+      if (verifyRes.data?.session?.access_token && verifyRes.data?.session?.refresh_token) {
+        const { error: setSessionError } = await supabase.auth.setSession({
+          access_token: verifyRes.data.session.access_token,
+          refresh_token: verifyRes.data.session.refresh_token,
+        });
+
+        if (!setSessionError) {
+          signedIn = true;
+        } else {
+          console.error("Failed to set session from backend tokens:", setSessionError.message);
+        }
+      }
+
+      // Fallback: sign in directly if session tokens weren't available
+      if (!signedIn) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (signInError) {
+          console.error("SignIn fallback failed:", signInError.message);
+          toast.error("Account verified successfully! Please log in manually.");
+          router.push("/login");
+          return;
+        }
       }
 
       // Pre-fetch the profile to make sure dashboard loads seamlessly

@@ -87,23 +87,46 @@ export default function LoginPage() {
         return;
       }
 
-      // Log in automatically since verification was successful
       const supabase = createClient();
-      const { error: signInError, data: authData } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      let signedIn = false;
 
-      if (signInError) {
-        toast.error("Verification successful! Please try logging in again.");
-        setIsVerifying(false);
-        return;
+      // If backend returned session tokens, use them directly
+      if (verifyRes.data?.session?.access_token && verifyRes.data?.session?.refresh_token) {
+        const { error: setSessionError } = await supabase.auth.setSession({
+          access_token: verifyRes.data.session.access_token,
+          refresh_token: verifyRes.data.session.refresh_token,
+        });
+
+        if (!setSessionError) {
+          signedIn = true;
+        } else {
+          console.error("Failed to set session from backend tokens:", setSessionError.message);
+        }
+      }
+
+      // Fallback: sign in directly if session tokens weren't available
+      if (!signedIn) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (signInError) {
+          console.error("SignIn fallback failed:", signInError.message);
+          toast.error("Login failed. Please try signing in again.");
+          setStep("form");
+          setOtp("");
+          setIsVerifying(false);
+          return;
+        }
+        signedIn = true;
       }
 
       // Sync/Check profile
       const profileRes = await api.getProfile();
       if (!profileRes.success) {
-        const meta = authData.user?.user_metadata || {};
+        const user = verifyRes.data?.user;
+        const meta = user?.user_metadata || {};
         await api.createProfile({
           full_name: meta.full_name || "Student",
           university: meta.university,

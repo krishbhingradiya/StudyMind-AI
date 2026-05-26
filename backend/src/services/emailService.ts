@@ -10,47 +10,30 @@ class EmailService {
   constructor() {
     this.isProduction = env.nodeEnv === "production";
 
-    // In production (Render/cloud), SMTP to Gmail is unreliable due to IPv6/firewall
-    // issues. Use Resend directly for instant delivery.
-    // SMTP is only initialized for local development.
-    if (!this.isProduction && env.smtpHost && env.smtpUser && env.smtpPass) {
+    // Initialize SMTP if configuration is available (works in both dev and production)
+    if (env.smtpHost && env.smtpUser && env.smtpPass) {
       try {
         const isGmail = env.smtpHost.includes("gmail.com");
-        const transportConfig: any = isGmail
-          ? {
-              service: "gmail",
-              pool: true,
-              family: 4,
-              connectionTimeout: 3000,
-              greetingTimeout: 3000,
-              socketTimeout: 5000,
-              auth: {
-                user: env.smtpUser,
-                pass: env.smtpPass,
-              },
-            }
-          : {
-              host: env.smtpHost,
-              port: env.smtpPort,
-              secure: env.smtpPort === 465,
-              pool: true,
-              family: 4,
-              connectionTimeout: 3000,
-              greetingTimeout: 3000,
-              socketTimeout: 5000,
-              auth: {
-                user: env.smtpUser,
-                pass: env.smtpPass,
-              },
-            };
+        const transportConfig: any = {
+          host: isGmail ? "smtp.gmail.com" : env.smtpHost,
+          port: isGmail ? 465 : env.smtpPort,
+          secure: isGmail ? true : env.smtpPort === 465,
+          pool: true,
+          family: 4, // Force IPv4 to prevent ENETUNREACH ipv6 connection errors on Render/cloud
+          connectionTimeout: 10000, // 10 seconds timeout for reliability
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+          auth: {
+            user: env.smtpUser,
+            pass: env.smtpPass,
+          },
+        };
 
         this.smtpTransporter = nodemailer.createTransport(transportConfig);
-        console.log("\x1b[32m%s\x1b[0m", `[EmailService] SMTP initialized (dev mode) with ${isGmail ? "Gmail service" : env.smtpHost}`);
+        console.log("\x1b[32m%s\x1b[0m", `[EmailService] SMTP Transporter initialized successfully with ${isGmail ? "Gmail (smtp.gmail.com)" : env.smtpHost}`);
       } catch (err) {
         console.error("[EmailService] Failed to initialize SMTP transporter:", err);
       }
-    } else if (this.isProduction) {
-      console.log("\x1b[33m%s\x1b[0m", "[EmailService] Production mode: Skipping SMTP, using Resend for email delivery.");
     }
 
     if (env.resendApiKey && env.resendApiKey.startsWith("re_")) {
@@ -164,12 +147,7 @@ class EmailService {
     const html = this.getOTPEmailHTML(otp, type);
     const text = `Your StudyMind AI Verification Code is: ${otp}. It is valid for 15 minutes.`;
 
-    // In production, go straight to Resend (fastest path)
-    if (this.isProduction && this.resend) {
-      return this.sendViaResend(email, subject, html, text);
-    }
-
-    // In development, try SMTP first (sends from your Gmail)
+    // Try SMTP first (sends from your configured Gmail/SMTP account)
     if (this.smtpTransporter) {
       try {
         await this.smtpTransporter.sendMail({
@@ -331,12 +309,7 @@ class EmailService {
 
     const text = `Welcome to StudyMind AI, ${name}.\n\nYour account has been successfully created. StudyMind AI is designed to help you study smarter with AI-powered insights, smart quizzes, personalized roadmaps, and handwriting recognition.\n\nHead over to your dashboard to get started.`;
 
-    // In production, use Resend directly (fastest)
-    if (this.isProduction && this.resend) {
-      return this.sendViaResend(email, subject, html, text);
-    }
-
-    // In development, try SMTP first
+    // Try SMTP first
     if (this.smtpTransporter) {
       try {
         await this.smtpTransporter.sendMail({
