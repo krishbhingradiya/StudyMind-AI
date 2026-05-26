@@ -17,12 +17,13 @@ class EmailService {
                     host: env_1.env.smtpHost,
                     port: env_1.env.smtpPort,
                     secure: env_1.env.smtpPort === 465, // true for 465, false for other ports (587, 25)
+                    pool: true, // Enable connection pooling to reuse SMTP connections and speed up delivery
                     auth: {
                         user: env_1.env.smtpUser,
                         pass: env_1.env.smtpPass,
                     },
                 });
-                console.log("\x1b[32m%s\x1b[0m", `[EmailService] SMTP initialized successfully with host: ${env_1.env.smtpHost}`);
+                console.log("\x1b[32m%s\x1b[0m", `[EmailService] SMTP initialized successfully (with pooling) with host: ${env_1.env.smtpHost}`);
             }
             catch (err) {
                 console.error("[EmailService] Failed to initialize SMTP transporter:", err);
@@ -96,7 +97,7 @@ class EmailService {
                       </table>
                       
                       <!-- Expiry Notice -->
-                      <p style="margin: 24px 0 0 0; font-size: 13px; line-height: 1.6; color: #5a5f72; text-align: center;">This code expires in <strong style="color: #1a1a2e;">5 minutes</strong>. For your security, please do not share this code with anyone.</p>
+                      <p style="margin: 24px 0 0 0; font-size: 13px; line-height: 1.6; color: #5a5f72; text-align: center;">This code expires in <strong style="color: #1a1a2e;">15 minutes</strong>. For your security, please do not share this code with anyone.</p>
                       
                       <!-- Divider -->
                       <hr style="border: none; border-top: 1px solid #eef0f3; margin: 28px 0;">
@@ -136,14 +137,36 @@ class EmailService {
             subject = "StudyMind AI - Reset Your Password";
         }
         const html = this.getOTPEmailHTML(otp, type);
-        // 1. Try sending via SMTP
+        // 1. Try sending via Resend first
+        if (this.resend) {
+            try {
+                const fromAddress = env_1.env.smtpFrom && !env_1.env.smtpFrom.includes("gmail.com") && !env_1.env.smtpFrom.includes("yahoo.com") && !env_1.env.smtpFrom.includes("hotmail.com")
+                    ? env_1.env.smtpFrom
+                    : "StudyMind AI <onboarding@resend.dev>";
+                const { data, error } = await this.resend.emails.send({
+                    from: fromAddress,
+                    to: email,
+                    subject: subject,
+                    html: html,
+                });
+                if (error) {
+                    throw new Error(error.message);
+                }
+                console.log(`[EmailService] Email successfully sent to ${email} via Resend (ID: ${data?.id})`);
+                return true;
+            }
+            catch (err) {
+                console.warn("[EmailService] Failed to send email via Resend, falling back to SMTP:", err);
+            }
+        }
+        // 2. Try sending via SMTP as fallback
         if (this.smtpTransporter) {
             try {
                 await this.smtpTransporter.sendMail({
                     from: env_1.env.smtpFrom,
                     to: email,
                     subject: subject,
-                    text: `Your StudyMind AI Verification Code is: ${otp}. It is valid for 5 minutes.`,
+                    text: `Your StudyMind AI Verification Code is: ${otp}. It is valid for 15 minutes.`,
                     html: html,
                 });
                 console.log(`[EmailService] Email successfully sent to ${email} via SMTP`);
@@ -151,27 +174,6 @@ class EmailService {
             }
             catch (err) {
                 console.error("[EmailService] Failed to send email via SMTP:", err);
-            }
-        }
-        // 2. Try sending via Resend
-        if (this.resend) {
-            try {
-                // In Resend sandbox/testing without a custom domain, we must use onboarding@resend.dev as the from address
-                const { data, error } = await this.resend.emails.send({
-                    from: "StudyMind AI <onboarding@resend.dev>",
-                    to: email,
-                    subject: subject,
-                    html: html,
-                });
-                if (error) {
-                    console.error("[EmailService] Resend email send error:", error);
-                    throw new Error(error.message);
-                }
-                console.log(`[EmailService] Email successfully sent to ${email} via Resend (ID: ${data?.id})`);
-                return true;
-            }
-            catch (err) {
-                console.error("[EmailService] Failed to send email via Resend:", err);
             }
         }
         // 3. Fallback: log to console
@@ -280,6 +282,29 @@ class EmailService {
       </html>
     `;
         const text = `Welcome to StudyMind AI, ${name}.\n\nYour account has been successfully created. StudyMind AI is designed to help you study smarter with AI-powered insights, smart quizzes, personalized roadmaps, and handwriting recognition.\n\nHead over to your dashboard to get started.`;
+        // 1. Try sending via Resend first
+        if (this.resend) {
+            try {
+                const fromAddress = env_1.env.smtpFrom && !env_1.env.smtpFrom.includes("gmail.com") && !env_1.env.smtpFrom.includes("yahoo.com") && !env_1.env.smtpFrom.includes("hotmail.com")
+                    ? env_1.env.smtpFrom
+                    : "StudyMind AI <onboarding@resend.dev>";
+                const { data, error } = await this.resend.emails.send({
+                    from: fromAddress,
+                    to: email,
+                    subject: subject,
+                    html: html,
+                });
+                if (error) {
+                    throw new Error(error.message);
+                }
+                console.log(`[EmailService] Welcome email sent to ${email} via Resend (ID: ${data?.id})`);
+                return true;
+            }
+            catch (err) {
+                console.warn("[EmailService] Failed to send welcome email via Resend, falling back to SMTP:", err);
+            }
+        }
+        // 2. Try sending via SMTP
         if (this.smtpTransporter) {
             try {
                 await this.smtpTransporter.sendMail({
@@ -289,11 +314,11 @@ class EmailService {
                     text: text,
                     html: html,
                 });
-                console.log(`[EmailService] Welcome email sent to ${email}`);
+                console.log(`[EmailService] Welcome email sent to ${email} via SMTP`);
                 return true;
             }
             catch (err) {
-                console.error("[EmailService] Failed to send welcome email:", err);
+                console.error("[EmailService] Failed to send welcome email via SMTP:", err);
             }
         }
         return false;

@@ -48,7 +48,7 @@ class OTPService {
             }
         }
         const code = this.generateOTP();
-        const expiresAt = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes expiry
+        const expiresAt = new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes expiry
         const newSession = {
             code,
             expiresAt,
