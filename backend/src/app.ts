@@ -6,10 +6,6 @@ import { env } from "./config/env";
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
-import { setupLogger } from "./utils/logger";
-
-setupLogger();
-
 const app = express();
 
 app.use(

@@ -1,3 +1,6 @@
+import { setupLogger } from "./utils/logger";
+setupLogger();
+
 import app from "./app";
 import { env } from "./config/env";
 import { getSupabaseAdmin } from "./config/supabase";
