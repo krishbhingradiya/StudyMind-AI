@@ -50,6 +50,13 @@ app.use(morgan(env.nodeEnv === "development" ? "dev" : "combined"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/", (_req, res) => {
+  res.json({
+    success: true,
+    message: "Backend running successfully",
+  });
+});
+
 app.use("/api", routes);
 
 app.use(notFoundHandler);

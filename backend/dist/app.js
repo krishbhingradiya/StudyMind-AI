@@ -44,6 +44,12 @@ app.use((0, cors_1.default)({
 app.use((0, morgan_1.default)(env_1.env.nodeEnv === "development" ? "dev" : "combined"));
 app.use(express_1.default.json({ limit: "10mb" }));
 app.use(express_1.default.urlencoded({ extended: true }));
+app.get("/", (_req, res) => {
+    res.json({
+        success: true,
+        message: "Backend running successfully",
+    });
+});
 app.use("/api", routes_1.default);
 app.use(errorHandler_1.notFoundHandler);
 app.use(errorHandler_1.errorHandler);

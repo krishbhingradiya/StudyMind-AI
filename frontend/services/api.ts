@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/client";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+let rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+// Strip trailing slashes
+rawBaseUrl = rawBaseUrl.replace(/\/+$/, "");
+// Ensure API URL has the correct /api suffix
+if (!rawBaseUrl.endsWith("/api")) {
+  rawBaseUrl += "/api";
+}
+const API_URL = rawBaseUrl;
 
 async function getAuthToken(): Promise<string | null> {
   const supabase = createClient();
@@ -23,7 +30,8 @@ async function apiRequest<T>(
   };
 
   try {
-    const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const res = await fetch(`${API_URL}${cleanEndpoint}`, { ...options, headers });
     const text = await res.text();
     let parsed: ApiResult<T>;
 

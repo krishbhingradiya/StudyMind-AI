@@ -49,6 +49,7 @@ const userController = __importStar(require("../controllers/userController"));
 const academicController = __importStar(require("../controllers/academicController"));
 const weakTopicService_1 = require("../services/ai/weakTopicService");
 const apiResponse_1 = require("../utils/apiResponse");
+const auth_2 = __importDefault(require("./auth"));
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -58,13 +59,7 @@ router.get("/health", (_req, res) => {
     res.json({ success: true, message: "StudyMind API is running" });
 });
 // Auth
-router.post("/auth/send-otp", userController.sendOtp);
-router.post("/auth/verify-otp", userController.verifyOtp);
-router.post("/auth/resend-otp", userController.resendOtp);
-router.post("/auth/send-login-otp", userController.sendLoginOtp);
-router.post("/auth/verify-login-otp", userController.verifyLoginOtp);
-router.post("/auth/forgot-password", userController.forgotPassword);
-router.post("/auth/reset-password", userController.resetPassword);
+router.use("/auth", auth_2.default);
 // User
 router.get("/users/profile", auth_1.authMiddleware, userController.getProfile);
 router.post("/users/profile", auth_1.authMiddleware, userController.createProfile);

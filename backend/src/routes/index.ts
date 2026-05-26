@@ -13,6 +13,8 @@ import { getWeakTopics } from "../services/ai/weakTopicService";
 import { sendSuccess, sendError } from "../utils/apiResponse";
 import { AuthenticatedRequest } from "../middleware/auth";
 
+import authRoutes from "./auth";
+
 const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -24,13 +26,7 @@ router.get("/health", (_req, res) => {
 });
 
 // Auth
-router.post("/auth/send-otp", userController.sendOtp);
-router.post("/auth/verify-otp", userController.verifyOtp);
-router.post("/auth/resend-otp", userController.resendOtp);
-router.post("/auth/send-login-otp", userController.sendLoginOtp);
-router.post("/auth/verify-login-otp", userController.verifyLoginOtp);
-router.post("/auth/forgot-password", userController.forgotPassword);
-router.post("/auth/reset-password", userController.resetPassword);
+router.use("/auth", authRoutes);
 
 // User
 router.get("/users/profile", authMiddleware, userController.getProfile);
