@@ -13,17 +13,28 @@ class EmailService {
         this.smtpTransporter = null;
         if (env_1.env.smtpHost && env_1.env.smtpUser && env_1.env.smtpPass) {
             try {
-                this.smtpTransporter = nodemailer_1.default.createTransport({
-                    host: env_1.env.smtpHost,
-                    port: env_1.env.smtpPort,
-                    secure: env_1.env.smtpPort === 465, // true for 465, false for other ports (587, 25)
-                    pool: true, // Enable connection pooling to reuse SMTP connections and speed up delivery
-                    auth: {
-                        user: env_1.env.smtpUser,
-                        pass: env_1.env.smtpPass,
-                    },
-                });
-                console.log("\x1b[32m%s\x1b[0m", `[EmailService] SMTP initialized successfully (with pooling) with host: ${env_1.env.smtpHost}`);
+                const isGmail = env_1.env.smtpHost.includes("gmail.com");
+                const transportConfig = isGmail
+                    ? {
+                        service: "gmail",
+                        pool: true, // Reuse connections for faster delivery
+                        auth: {
+                            user: env_1.env.smtpUser,
+                            pass: env_1.env.smtpPass,
+                        },
+                    }
+                    : {
+                        host: env_1.env.smtpHost,
+                        port: env_1.env.smtpPort,
+                        secure: env_1.env.smtpPort === 465, // true for 465, false for other ports (587, 25)
+                        pool: true, // Enable connection pooling to reuse SMTP connections
+                        auth: {
+                            user: env_1.env.smtpUser,
+                            pass: env_1.env.smtpPass,
+                        },
+                    };
+                this.smtpTransporter = nodemailer_1.default.createTransport(transportConfig);
+                console.log("\x1b[32m%s\x1b[0m", `[EmailService] SMTP initialized successfully with ${isGmail ? "Gmail service" : env_1.env.smtpHost}`);
             }
             catch (err) {
                 console.error("[EmailService] Failed to initialize SMTP transporter:", err);
@@ -137,7 +148,24 @@ class EmailService {
             subject = "StudyMind AI - Reset Your Password";
         }
         const html = this.getOTPEmailHTML(otp, type);
-        // 1. Try sending via Resend first
+        // 1. Try sending via SMTP first (to use the user's Gmail address)
+        if (this.smtpTransporter) {
+            try {
+                await this.smtpTransporter.sendMail({
+                    from: env_1.env.smtpFrom,
+                    to: email,
+                    subject: subject,
+                    text: `Your StudyMind AI Verification Code is: ${otp}. It is valid for 15 minutes.`,
+                    html: html,
+                });
+                console.log(`[EmailService] Email successfully sent to ${email} via SMTP`);
+                return true;
+            }
+            catch (err) {
+                console.error("[EmailService] Failed to send email via SMTP, falling back to Resend:", err);
+            }
+        }
+        // 2. Try sending via Resend as fallback
         if (this.resend) {
             try {
                 const fromAddress = env_1.env.smtpFrom && !env_1.env.smtpFrom.includes("gmail.com") && !env_1.env.smtpFrom.includes("yahoo.com") && !env_1.env.smtpFrom.includes("hotmail.com")
@@ -156,24 +184,7 @@ class EmailService {
                 return true;
             }
             catch (err) {
-                console.warn("[EmailService] Failed to send email via Resend, falling back to SMTP:", err);
-            }
-        }
-        // 2. Try sending via SMTP as fallback
-        if (this.smtpTransporter) {
-            try {
-                await this.smtpTransporter.sendMail({
-                    from: env_1.env.smtpFrom,
-                    to: email,
-                    subject: subject,
-                    text: `Your StudyMind AI Verification Code is: ${otp}. It is valid for 15 minutes.`,
-                    html: html,
-                });
-                console.log(`[EmailService] Email successfully sent to ${email} via SMTP`);
-                return true;
-            }
-            catch (err) {
-                console.error("[EmailService] Failed to send email via SMTP:", err);
+                console.error("[EmailService] Failed to send email via Resend:", err);
             }
         }
         // 3. Fallback: log to console
@@ -282,7 +293,24 @@ class EmailService {
       </html>
     `;
         const text = `Welcome to StudyMind AI, ${name}.\n\nYour account has been successfully created. StudyMind AI is designed to help you study smarter with AI-powered insights, smart quizzes, personalized roadmaps, and handwriting recognition.\n\nHead over to your dashboard to get started.`;
-        // 1. Try sending via Resend first
+        // 1. Try sending via SMTP first (to use custom Gmail sender)
+        if (this.smtpTransporter) {
+            try {
+                await this.smtpTransporter.sendMail({
+                    from: env_1.env.smtpFrom,
+                    to: email,
+                    subject: subject,
+                    text: text,
+                    html: html,
+                });
+                console.log(`[EmailService] Welcome email sent to ${email} via SMTP`);
+                return true;
+            }
+            catch (err) {
+                console.error("[EmailService] Failed to send welcome email via SMTP, falling back to Resend:", err);
+            }
+        }
+        // 2. Try sending via Resend as fallback
         if (this.resend) {
             try {
                 const fromAddress = env_1.env.smtpFrom && !env_1.env.smtpFrom.includes("gmail.com") && !env_1.env.smtpFrom.includes("yahoo.com") && !env_1.env.smtpFrom.includes("hotmail.com")
@@ -301,24 +329,7 @@ class EmailService {
                 return true;
             }
             catch (err) {
-                console.warn("[EmailService] Failed to send welcome email via Resend, falling back to SMTP:", err);
-            }
-        }
-        // 2. Try sending via SMTP
-        if (this.smtpTransporter) {
-            try {
-                await this.smtpTransporter.sendMail({
-                    from: env_1.env.smtpFrom,
-                    to: email,
-                    subject: subject,
-                    text: text,
-                    html: html,
-                });
-                console.log(`[EmailService] Welcome email sent to ${email} via SMTP`);
-                return true;
-            }
-            catch (err) {
-                console.error("[EmailService] Failed to send welcome email via SMTP:", err);
+                console.error("[EmailService] Failed to send welcome email via Resend:", err);
             }
         }
         return false;
