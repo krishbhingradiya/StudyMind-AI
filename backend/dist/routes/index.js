@@ -50,6 +50,7 @@ const academicController = __importStar(require("../controllers/academicControll
 const weakTopicService_1 = require("../services/ai/weakTopicService");
 const apiResponse_1 = require("../utils/apiResponse");
 const env_1 = require("../config/env");
+const logger_1 = require("../utils/logger");
 const auth_2 = __importDefault(require("./auth"));
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
@@ -77,6 +78,13 @@ router.get("/debug/config", (_req, res) => {
             FRONTEND_URL: env_1.env.frontendUrl || "NOT SET",
             GEMINI_API_KEY: mask(env_1.env.geminiApiKey),
         },
+    });
+});
+// Diagnostic endpoint to view recent memory logs
+router.get("/debug/logs", (_req, res) => {
+    res.json({
+        success: true,
+        logs: logger_1.memoryLogs,
     });
 });
 // Auth

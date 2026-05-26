@@ -10,6 +10,8 @@ const morgan_1 = __importDefault(require("morgan"));
 const env_1 = require("./config/env");
 const routes_1 = __importDefault(require("./routes"));
 const errorHandler_1 = require("./middleware/errorHandler");
+const logger_1 = require("./utils/logger");
+(0, logger_1.setupLogger)();
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)({
     crossOriginResourcePolicy: { policy: "cross-origin" },

@@ -13,6 +13,7 @@ import { getWeakTopics } from "../services/ai/weakTopicService";
 import { sendSuccess, sendError } from "../utils/apiResponse";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { env } from "../config/env";
+import { memoryLogs } from "../utils/logger";
 
 import authRoutes from "./auth";
 
@@ -44,6 +45,14 @@ router.get("/debug/config", (_req, res) => {
       FRONTEND_URL: env.frontendUrl || "NOT SET",
       GEMINI_API_KEY: mask(env.geminiApiKey),
     },
+  });
+});
+
+// Diagnostic endpoint to view recent memory logs
+router.get("/debug/logs", (_req, res) => {
+  res.json({
+    success: true,
+    logs: memoryLogs,
   });
 });
 
