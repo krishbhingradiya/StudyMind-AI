@@ -11,17 +11,21 @@ class EmailService {
     constructor() {
         this.resend = null;
         this.smtpTransporter = null;
-        if (env_1.env.smtpHost && env_1.env.smtpUser && env_1.env.smtpPass) {
+        this.isProduction = env_1.env.nodeEnv === "production";
+        // In production (Render/cloud), SMTP to Gmail is unreliable due to IPv6/firewall
+        // issues. Use Resend directly for instant delivery.
+        // SMTP is only initialized for local development.
+        if (!this.isProduction && env_1.env.smtpHost && env_1.env.smtpUser && env_1.env.smtpPass) {
             try {
                 const isGmail = env_1.env.smtpHost.includes("gmail.com");
                 const transportConfig = isGmail
                     ? {
                         service: "gmail",
-                        pool: true, // Reuse connections for faster delivery
-                        family: 4, // Force IPv4 to avoid ENETUNREACH errors on cloud servers like Render
-                        connectionTimeout: 5000, // 5 seconds timeout to establish connection
-                        greetingTimeout: 5000, // 5 seconds timeout to wait for SMTP greeting
-                        socketTimeout: 10000, // 10 seconds timeout for inactive socket
+                        pool: true,
+                        family: 4,
+                        connectionTimeout: 3000,
+                        greetingTimeout: 3000,
+                        socketTimeout: 5000,
                         auth: {
                             user: env_1.env.smtpUser,
                             pass: env_1.env.smtpPass,
@@ -30,38 +34,33 @@ class EmailService {
                     : {
                         host: env_1.env.smtpHost,
                         port: env_1.env.smtpPort,
-                        secure: env_1.env.smtpPort === 465, // true for 465, false for other ports (587, 25)
-                        pool: true, // Enable connection pooling to reuse SMTP connections
-                        family: 4, // Force IPv4
-                        connectionTimeout: 5000,
-                        greetingTimeout: 5000,
-                        socketTimeout: 10000,
+                        secure: env_1.env.smtpPort === 465,
+                        pool: true,
+                        family: 4,
+                        connectionTimeout: 3000,
+                        greetingTimeout: 3000,
+                        socketTimeout: 5000,
                         auth: {
                             user: env_1.env.smtpUser,
                             pass: env_1.env.smtpPass,
                         },
                     };
                 this.smtpTransporter = nodemailer_1.default.createTransport(transportConfig);
-                console.log("\x1b[32m%s\x1b[0m", `[EmailService] SMTP initialized successfully with ${isGmail ? "Gmail service" : env_1.env.smtpHost}`);
-                // Verify the connection configuration on startup
-                this.smtpTransporter.verify((error) => {
-                    if (error) {
-                        console.error("\x1b[31m%s\x1b[0m", `[EmailService] SMTP connection verification failed on startup: ${error.message}`);
-                    }
-                    else {
-                        console.log("\x1b[32m%s\x1b[0m", "[EmailService] SMTP connection verified successfully on startup. Ready to send emails.");
-                    }
-                });
+                console.log("\x1b[32m%s\x1b[0m", `[EmailService] SMTP initialized (dev mode) with ${isGmail ? "Gmail service" : env_1.env.smtpHost}`);
             }
             catch (err) {
                 console.error("[EmailService] Failed to initialize SMTP transporter:", err);
             }
         }
+        else if (this.isProduction) {
+            console.log("\x1b[33m%s\x1b[0m", "[EmailService] Production mode: Skipping SMTP, using Resend for email delivery.");
+        }
         if (env_1.env.resendApiKey && env_1.env.resendApiKey.startsWith("re_")) {
             this.resend = new resend_1.Resend(env_1.env.resendApiKey);
+            console.log("\x1b[32m%s\x1b[0m", "[EmailService] Resend API initialized successfully.");
         }
         else if (!this.smtpTransporter) {
-            console.log("\x1b[33m%s\x1b[0m", "[EmailService] Warning: SMTP and RESEND_API_KEY are not configured. Email sending will run in Sandbox Mode (logging to console).");
+            console.log("\x1b[33m%s\x1b[0m", "[EmailService] Warning: No email provider configured. Emails will be logged to console (sandbox mode).");
         }
     }
     /**
@@ -165,46 +164,33 @@ class EmailService {
             subject = "StudyMind AI - Reset Your Password";
         }
         const html = this.getOTPEmailHTML(otp, type);
-        // 1. Try sending via SMTP first (to use the user's Gmail address)
+        const text = `Your StudyMind AI Verification Code is: ${otp}. It is valid for 15 minutes.`;
+        // In production, go straight to Resend (fastest path)
+        if (this.isProduction && this.resend) {
+            return this.sendViaResend(email, subject, html, text);
+        }
+        // In development, try SMTP first (sends from your Gmail)
         if (this.smtpTransporter) {
             try {
                 await this.smtpTransporter.sendMail({
                     from: env_1.env.smtpFrom,
                     to: email,
-                    subject: subject,
-                    text: `Your StudyMind AI Verification Code is: ${otp}. It is valid for 15 minutes.`,
-                    html: html,
+                    subject,
+                    text,
+                    html,
                 });
                 console.log(`[EmailService] Email successfully sent to ${email} via SMTP`);
                 return true;
             }
             catch (err) {
-                console.error("[EmailService] Failed to send email via SMTP, falling back to Resend:", err);
+                console.error("[EmailService] SMTP failed, falling back to Resend:", err.message);
             }
         }
-        // 2. Try sending via Resend as fallback
+        // Fallback to Resend
         if (this.resend) {
-            try {
-                const fromAddress = env_1.env.smtpFrom && !env_1.env.smtpFrom.includes("gmail.com") && !env_1.env.smtpFrom.includes("yahoo.com") && !env_1.env.smtpFrom.includes("hotmail.com")
-                    ? env_1.env.smtpFrom
-                    : "StudyMind AI <onboarding@resend.dev>";
-                const { data, error } = await this.resend.emails.send({
-                    from: fromAddress,
-                    to: email,
-                    subject: subject,
-                    html: html,
-                });
-                if (error) {
-                    throw new Error(error.message);
-                }
-                console.log(`[EmailService] Email successfully sent to ${email} via Resend (ID: ${data?.id})`);
-                return true;
-            }
-            catch (err) {
-                console.error("[EmailService] Failed to send email via Resend:", err);
-            }
+            return this.sendViaResend(email, subject, html, text);
         }
-        // 3. Fallback: log to console
+        // Last resort: log to console (sandbox mode)
         console.log("\n");
         console.log("\x1b[35m%s\x1b[0m", "=================================================================");
         console.log("\x1b[36m%s\x1b[0m", "                    STUDYMIND AI OTP SANDBOX                     ");
@@ -215,6 +201,35 @@ class EmailService {
         console.log("\x1b[35m%s\x1b[0m", "=================================================================");
         console.log("\n");
         return true;
+    }
+    /**
+     * Send email via Resend API (used in production)
+     * Note: Resend free tier only allows sending from onboarding@resend.dev
+     * To send from your own domain, you need to add and verify a domain in Resend.
+     */
+    async sendViaResend(email, subject, html, text) {
+        if (!this.resend)
+            return false;
+        try {
+            // Resend free tier ONLY allows sending from onboarding@resend.dev
+            // To use studymindai.admin@gmail.com, you must add + verify a custom domain in Resend
+            const fromAddress = "StudyMind AI <onboarding@resend.dev>";
+            const { data, error } = await this.resend.emails.send({
+                from: fromAddress,
+                to: email,
+                subject,
+                html,
+            });
+            if (error) {
+                throw new Error(error.message);
+            }
+            console.log(`[EmailService] Email sent to ${email} via Resend (ID: ${data?.id})`);
+            return true;
+        }
+        catch (err) {
+            console.error("[EmailService] Resend failed:", err.message);
+            return false;
+        }
     }
     async sendWelcomeEmail(email, name) {
         const subject = "Welcome to StudyMind AI";
@@ -310,44 +325,30 @@ class EmailService {
       </html>
     `;
         const text = `Welcome to StudyMind AI, ${name}.\n\nYour account has been successfully created. StudyMind AI is designed to help you study smarter with AI-powered insights, smart quizzes, personalized roadmaps, and handwriting recognition.\n\nHead over to your dashboard to get started.`;
-        // 1. Try sending via SMTP first (to use custom Gmail sender)
+        // In production, use Resend directly (fastest)
+        if (this.isProduction && this.resend) {
+            return this.sendViaResend(email, subject, html, text);
+        }
+        // In development, try SMTP first
         if (this.smtpTransporter) {
             try {
                 await this.smtpTransporter.sendMail({
                     from: env_1.env.smtpFrom,
                     to: email,
-                    subject: subject,
-                    text: text,
-                    html: html,
+                    subject,
+                    text,
+                    html,
                 });
                 console.log(`[EmailService] Welcome email sent to ${email} via SMTP`);
                 return true;
             }
             catch (err) {
-                console.error("[EmailService] Failed to send welcome email via SMTP, falling back to Resend:", err);
+                console.error("[EmailService] SMTP failed for welcome email:", err.message);
             }
         }
-        // 2. Try sending via Resend as fallback
+        // Fallback to Resend
         if (this.resend) {
-            try {
-                const fromAddress = env_1.env.smtpFrom && !env_1.env.smtpFrom.includes("gmail.com") && !env_1.env.smtpFrom.includes("yahoo.com") && !env_1.env.smtpFrom.includes("hotmail.com")
-                    ? env_1.env.smtpFrom
-                    : "StudyMind AI <onboarding@resend.dev>";
-                const { data, error } = await this.resend.emails.send({
-                    from: fromAddress,
-                    to: email,
-                    subject: subject,
-                    html: html,
-                });
-                if (error) {
-                    throw new Error(error.message);
-                }
-                console.log(`[EmailService] Welcome email sent to ${email} via Resend (ID: ${data?.id})`);
-                return true;
-            }
-            catch (err) {
-                console.error("[EmailService] Failed to send welcome email via Resend:", err);
-            }
+            return this.sendViaResend(email, subject, html, text);
         }
         return false;
     }

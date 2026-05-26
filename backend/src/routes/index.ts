@@ -12,6 +12,7 @@ import * as academicController from "../controllers/academicController";
 import { getWeakTopics } from "../services/ai/weakTopicService";
 import { sendSuccess, sendError } from "../utils/apiResponse";
 import { AuthenticatedRequest } from "../middleware/auth";
+import { env } from "../config/env";
 
 import authRoutes from "./auth";
 
@@ -23,6 +24,27 @@ const upload = multer({
 
 router.get("/health", (_req, res) => {
   res.json({ success: true, message: "StudyMind API is running" });
+});
+
+// Diagnostic endpoint to verify environment variable configuration
+// Shows which vars are configured (without revealing values)
+router.get("/debug/config", (_req, res) => {
+  const mask = (val: string | undefined) => val ? `✅ SET (${val.length} chars)` : "❌ NOT SET";
+  res.json({
+    success: true,
+    environment: env.nodeEnv,
+    config: {
+      SUPABASE_URL: mask(env.supabaseUrl),
+      SUPABASE_SERVICE_ROLE_KEY: mask(env.supabaseServiceKey),
+      SUPABASE_ANON_KEY: mask(env.supabaseAnonKey),
+      RESEND_API_KEY: mask(env.resendApiKey),
+      SMTP_HOST: mask(env.smtpHost),
+      SMTP_USER: mask(env.smtpUser),
+      SMTP_PASS: mask(env.smtpPass),
+      FRONTEND_URL: env.frontendUrl || "NOT SET",
+      GEMINI_API_KEY: mask(env.geminiApiKey),
+    },
+  });
 });
 
 // Auth

@@ -228,46 +228,89 @@ async function verifyOtp(req, res) {
             return (0, apiResponse_1.sendError)(res, result.error || "Invalid or expired verification code.", 400);
         }
         const signupData = result.signupData;
-        const supabase = (0, supabase_1.getSupabaseAdmin)();
+        let supabase;
+        try {
+            supabase = (0, supabase_1.getSupabaseAdmin)();
+        }
+        catch (configErr) {
+            console.error("[verifyOtp] Supabase not configured:", configErr.message);
+            return (0, apiResponse_1.sendError)(res, "Server configuration error. Please contact support.", 500);
+        }
         // 1. Create user in Supabase auth
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-            email: signupData.email,
-            password: signupData.password,
-            email_confirm: true,
-            user_metadata: {
-                full_name: signupData.full_name,
+        let authData, authError;
+        try {
+            const result = await supabase.auth.admin.createUser({
+                email: signupData.email,
+                password: signupData.password,
+                email_confirm: true,
+                user_metadata: {
+                    full_name: signupData.full_name,
+                    university: signupData.university,
+                    branch: signupData.branch,
+                    semester: signupData.semester,
+                },
+            });
+            authData = result.data;
+            authError = result.error;
+        }
+        catch (supabaseErr) {
+            const errMsg = supabaseErr.message || "";
+            console.error("[verifyOtp] Supabase createUser exception:", errMsg);
+            if (errMsg.includes("HTML") || errMsg.includes("<!DOCTYPE") || errMsg.includes("<html")) {
+                return (0, apiResponse_1.sendError)(res, "Server configuration error: Unable to connect to authentication service.", 500);
+            }
+            return (0, apiResponse_1.sendError)(res, "Failed to create account. Please try again.", 500);
+        }
+        if (authError || !authData?.user) {
+            const errorMessage = authError?.message || "Failed to create account.";
+            console.error("[verifyOtp] Supabase auth error:", errorMessage);
+            // Check if it's a "user already exists" error
+            if (errorMessage.toLowerCase().includes("already") || errorMessage.toLowerCase().includes("exists")) {
+                return (0, apiResponse_1.sendError)(res, "An account with this email already exists. Please try logging in.", 400);
+            }
+            return (0, apiResponse_1.sendError)(res, errorMessage, 400);
+        }
+        // 2. Create profile in users table
+        let profileData, profileError;
+        try {
+            const result = await supabase
+                .from("users")
+                .upsert({
+                id: authData.user.id,
+                email: signupData.email,
+                full_name: signupData.full_name || "Student",
                 university: signupData.university,
                 branch: signupData.branch,
                 semester: signupData.semester,
-            },
-        });
-        if (authError || !authData.user) {
-            return (0, apiResponse_1.sendError)(res, authError?.message || "Failed to create account.", 400);
+            })
+                .select()
+                .single();
+            profileData = result.data;
+            profileError = result.error;
         }
-        // 2. Create profile in users table
-        const { data: profileData, error: profileError } = await supabase
-            .from("users")
-            .upsert({
-            id: authData.user.id,
-            email: signupData.email,
-            full_name: signupData.full_name || "Student",
-            university: signupData.university,
-            branch: signupData.branch,
-            semester: signupData.semester,
-        })
-            .select()
-            .single();
+        catch (profileErr) {
+            console.error("[verifyOtp] Profile creation exception:", profileErr.message);
+            // Clean up auth user
+            await supabase.auth.admin.deleteUser(authData.user.id).catch(() => { });
+            return (0, apiResponse_1.sendError)(res, "Failed to create user profile. Please try again.", 500);
+        }
         if (profileError) {
             // Clean up the auth user if profile creation fails
-            await supabase.auth.admin.deleteUser(authData.user.id);
-            return (0, apiResponse_1.sendError)(res, profileError.message, 500);
+            await supabase.auth.admin.deleteUser(authData.user.id).catch(() => { });
+            console.error("[verifyOtp] Profile error:", profileError.message);
+            return (0, apiResponse_1.sendError)(res, "Failed to create user profile. Please try again.", 500);
         }
         // Send welcome email asynchronously
         emailService_1.emailService.sendWelcomeEmail(signupData.email, signupData.full_name || "Student").catch(console.error);
         return (0, apiResponse_1.sendSuccess)(res, { user: authData.user, profile: profileData }, "Account created and verified successfully!", 201);
     }
     catch (err) {
-        return (0, apiResponse_1.sendError)(res, err.message, 500);
+        const errMsg = err.message || "";
+        console.error("[verifyOtp] Unexpected error:", errMsg);
+        if (errMsg.includes("HTML") || errMsg.includes("<!DOCTYPE")) {
+            return (0, apiResponse_1.sendError)(res, "Server configuration error. Please contact support.", 500);
+        }
+        return (0, apiResponse_1.sendError)(res, errMsg || "An unexpected error occurred.", 500);
     }
 }
 async function resendOtp(req, res) {

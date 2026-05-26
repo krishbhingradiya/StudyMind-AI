@@ -49,6 +49,7 @@ const userController = __importStar(require("../controllers/userController"));
 const academicController = __importStar(require("../controllers/academicController"));
 const weakTopicService_1 = require("../services/ai/weakTopicService");
 const apiResponse_1 = require("../utils/apiResponse");
+const env_1 = require("../config/env");
 const auth_2 = __importDefault(require("./auth"));
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
@@ -57,6 +58,26 @@ const upload = (0, multer_1.default)({
 });
 router.get("/health", (_req, res) => {
     res.json({ success: true, message: "StudyMind API is running" });
+});
+// Diagnostic endpoint to verify environment variable configuration
+// Shows which vars are configured (without revealing values)
+router.get("/debug/config", (_req, res) => {
+    const mask = (val) => val ? `✅ SET (${val.length} chars)` : "❌ NOT SET";
+    res.json({
+        success: true,
+        environment: env_1.env.nodeEnv,
+        config: {
+            SUPABASE_URL: mask(env_1.env.supabaseUrl),
+            SUPABASE_SERVICE_ROLE_KEY: mask(env_1.env.supabaseServiceKey),
+            SUPABASE_ANON_KEY: mask(env_1.env.supabaseAnonKey),
+            RESEND_API_KEY: mask(env_1.env.resendApiKey),
+            SMTP_HOST: mask(env_1.env.smtpHost),
+            SMTP_USER: mask(env_1.env.smtpUser),
+            SMTP_PASS: mask(env_1.env.smtpPass),
+            FRONTEND_URL: env_1.env.frontendUrl || "NOT SET",
+            GEMINI_API_KEY: mask(env_1.env.geminiApiKey),
+        },
+    });
 });
 // Auth
 router.use("/auth", auth_2.default);
