@@ -18,6 +18,7 @@ class EmailService {
                     ? {
                         service: "gmail",
                         pool: true, // Reuse connections for faster delivery
+                        family: 4, // Force IPv4 to avoid ENETUNREACH errors on cloud servers like Render
                         connectionTimeout: 5000, // 5 seconds timeout to establish connection
                         greetingTimeout: 5000, // 5 seconds timeout to wait for SMTP greeting
                         socketTimeout: 10000, // 10 seconds timeout for inactive socket
@@ -31,6 +32,7 @@ class EmailService {
                         port: env_1.env.smtpPort,
                         secure: env_1.env.smtpPort === 465, // true for 465, false for other ports (587, 25)
                         pool: true, // Enable connection pooling to reuse SMTP connections
+                        family: 4, // Force IPv4
                         connectionTimeout: 5000,
                         greetingTimeout: 5000,
                         socketTimeout: 10000,
