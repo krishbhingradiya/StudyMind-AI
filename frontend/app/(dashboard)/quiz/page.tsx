@@ -167,7 +167,7 @@ export default function QuizPage() {
     }
   };
 
-  if (viewMode === "take" && activeQuiz?.questions?.length) {
+  if (viewMode === "take" && activeQuiz && activeQuiz.questions && activeQuiz.questions.length) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -178,14 +178,14 @@ export default function QuizPage() {
         </div>
         <QuizPlayer
           key={playerKey}
-          questions={activeQuiz.questions || []}
+          questions={activeQuiz.questions}
           onSubmit={submit}
         />
       </div>
     );
   }
 
-  if (viewMode === "review" && activeQuiz?.questions?.length) {
+  if (viewMode === "review" && activeQuiz && activeQuiz.questions && activeQuiz.questions.length) {
     const savedAnswers = activeQuiz.answers || {};
     return (
       <div className="space-y-6">
@@ -200,7 +200,7 @@ export default function QuizPage() {
         </div>
         <QuizReview
           quiz={activeQuiz}
-          questions={activeQuiz.questions || []}
+          questions={activeQuiz.questions}
           answers={savedAnswers}
         />
       </div>

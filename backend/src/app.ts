@@ -8,11 +8,42 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 app.use(
   cors({
-    origin: [env.frontendUrl, "http://localhost:3000"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or same-origin requests)
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        env.frontendUrl,
+        "http://localhost:3000",
+        "http://localhost:5173",
+      ].filter(Boolean);
+
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      const isAllowed = allowedOrigins.some(
+        (allowed) => allowed.replace(/\/$/, "") === normalizedOrigin
+      );
+
+      // Allow Vercel deployment and preview subdomains
+      const isVercel = normalizedOrigin.endsWith(".vercel.app") || normalizedOrigin.includes(".vercel.app");
+
+      if (isAllowed || isVercel) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked request from origin: ${origin}`);
+        callback(null, false);
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200,
   })
 );
 app.use(morgan(env.nodeEnv === "development" ? "dev" : "combined"));
