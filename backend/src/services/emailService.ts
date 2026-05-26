@@ -14,6 +14,9 @@ class EmailService {
           ? {
               service: "gmail",
               pool: true, // Reuse connections for faster delivery
+              connectionTimeout: 5000, // 5 seconds timeout to establish connection
+              greetingTimeout: 5000, // 5 seconds timeout to wait for SMTP greeting
+              socketTimeout: 10000, // 10 seconds timeout for inactive socket
               auth: {
                 user: env.smtpUser,
                 pass: env.smtpPass,
@@ -24,6 +27,9 @@ class EmailService {
               port: env.smtpPort,
               secure: env.smtpPort === 465, // true for 465, false for other ports (587, 25)
               pool: true, // Enable connection pooling to reuse SMTP connections
+              connectionTimeout: 5000,
+              greetingTimeout: 5000,
+              socketTimeout: 10000,
               auth: {
                 user: env.smtpUser,
                 pass: env.smtpPass,
@@ -32,6 +38,15 @@ class EmailService {
 
         this.smtpTransporter = nodemailer.createTransport(transportConfig);
         console.log("\x1b[32m%s\x1b[0m", `[EmailService] SMTP initialized successfully with ${isGmail ? "Gmail service" : env.smtpHost}`);
+        
+        // Verify the connection configuration on startup
+        this.smtpTransporter.verify((error) => {
+          if (error) {
+            console.error("\x1b[31m%s\x1b[0m", `[EmailService] SMTP connection verification failed on startup: ${error.message}`);
+          } else {
+            console.log("\x1b[32m%s\x1b[0m", "[EmailService] SMTP connection verified successfully on startup. Ready to send emails.");
+          }
+        });
       } catch (err) {
         console.error("[EmailService] Failed to initialize SMTP transporter:", err);
       }
