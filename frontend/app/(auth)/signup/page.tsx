@@ -104,6 +104,15 @@ export default function SignupPage() {
         return;
       }
 
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes("your-supabase")) {
+        toast.error("Frontend Configuration Error: Supabase environment variables are missing on Vercel. Please check your Vercel project settings.");
+        setIsVerifying(false);
+        return;
+      }
+
       const supabase = createClient();
       let signedIn = false;
 

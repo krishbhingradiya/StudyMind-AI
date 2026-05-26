@@ -10,9 +10,21 @@ if (!rawBaseUrl.endsWith("/api")) {
 const API_URL = rawBaseUrl;
 
 async function getAuthToken(): Promise<string | null> {
-  const supabase = createClient();
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token || null;
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes("your-supabase")) {
+      return null;
+    }
+
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || null;
+  } catch (err) {
+    console.error("Failed to fetch auth token safely:", err);
+    return null;
+  }
 }
 
 type ApiResult<T> = { success: boolean; data?: T; error?: string; message?: string };

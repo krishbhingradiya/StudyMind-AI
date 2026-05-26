@@ -37,11 +37,14 @@ class EmailService {
                 console.error("[EmailService] Failed to initialize SMTP transporter:", err);
             }
         }
+        if (env_1.env.brevoApiKey) {
+            console.log("\x1b[32m%s\x1b[0m", "[EmailService] Brevo HTTP API initialized successfully.");
+        }
         if (env_1.env.resendApiKey && env_1.env.resendApiKey.startsWith("re_")) {
             this.resend = new resend_1.Resend(env_1.env.resendApiKey);
             console.log("\x1b[32m%s\x1b[0m", "[EmailService] Resend API initialized successfully.");
         }
-        else if (!this.smtpTransporter) {
+        if (!env_1.env.brevoApiKey && !this.resend && !this.smtpTransporter) {
             console.log("\x1b[33m%s\x1b[0m", "[EmailService] Warning: No email provider configured. Emails will be logged to console (sandbox mode).");
         }
     }
@@ -147,7 +150,13 @@ class EmailService {
         }
         const html = this.getOTPEmailHTML(otp, type);
         const text = `Your StudyMind AI Verification Code is: ${otp}. It is valid for 15 minutes.`;
-        // Try SMTP first (sends from your configured Gmail/SMTP account)
+        // Try Brevo first (HTTP-based API, bypasses SMTP blocks, supports custom sender)
+        if (env_1.env.brevoApiKey) {
+            const success = await this.sendViaBrevo(email, subject, html, text);
+            if (success)
+                return true;
+        }
+        // Try SMTP (sends from your configured Gmail/SMTP account)
         if (this.smtpTransporter) {
             try {
                 await this.smtpTransporter.sendMail({
@@ -179,6 +188,57 @@ class EmailService {
         console.log("\x1b[35m%s\x1b[0m", "=================================================================");
         console.log("\n");
         return true;
+    }
+    /**
+     * Send email via Brevo HTTP API (highly reliable, bypasses Render port blocks)
+     */
+    async sendViaBrevo(email, subject, html, text) {
+        if (!env_1.env.brevoApiKey)
+            return false;
+        try {
+            let senderName = "StudyMind AI";
+            let senderEmail = "studymindai.admin@gmail.com";
+            const fromMatch = env_1.env.smtpFrom.match(/^(.*?)\s*<(.*?)>$/);
+            if (fromMatch) {
+                senderName = fromMatch[1].trim().replace(/^['"]|['"]$/g, "");
+                senderEmail = fromMatch[2].trim();
+            }
+            else if (env_1.env.smtpFrom.includes("@")) {
+                senderEmail = env_1.env.smtpFrom.trim().replace(/^['"]|['"]$/g, "");
+            }
+            const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+                method: "POST",
+                headers: {
+                    "accept": "application/json",
+                    "api-key": env_1.env.brevoApiKey,
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify({
+                    sender: {
+                        name: senderName,
+                        email: senderEmail,
+                    },
+                    to: [
+                        {
+                            email: email,
+                        },
+                    ],
+                    subject: subject,
+                    htmlContent: html,
+                    textContent: text || "",
+                }),
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Brevo API returned status ${response.status}: ${errorText}`);
+            }
+            console.log(`[EmailService] Email sent to ${email} via Brevo API`);
+            return true;
+        }
+        catch (err) {
+            console.error("[EmailService] Brevo API failed:", err.message);
+            return false;
+        }
     }
     /**
      * Send email via Resend API (used in production)
@@ -303,7 +363,13 @@ class EmailService {
       </html>
     `;
         const text = `Welcome to StudyMind AI, ${name}.\n\nYour account has been successfully created. StudyMind AI is designed to help you study smarter with AI-powered insights, smart quizzes, personalized roadmaps, and handwriting recognition.\n\nHead over to your dashboard to get started.`;
-        // Try SMTP first
+        // Try Brevo first (HTTP-based API, bypasses SMTP blocks, supports custom sender)
+        if (env_1.env.brevoApiKey) {
+            const success = await this.sendViaBrevo(email, subject, html, text);
+            if (success)
+                return true;
+        }
+        // Try SMTP
         if (this.smtpTransporter) {
             try {
                 await this.smtpTransporter.sendMail({

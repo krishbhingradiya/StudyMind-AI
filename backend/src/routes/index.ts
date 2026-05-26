@@ -39,6 +39,7 @@ router.get("/debug/config", (_req, res) => {
       SUPABASE_SERVICE_ROLE_KEY: mask(env.supabaseServiceKey),
       SUPABASE_ANON_KEY: mask(env.supabaseAnonKey),
       RESEND_API_KEY: mask(env.resendApiKey),
+      BREVO_API_KEY: mask(env.brevoApiKey),
       SMTP_HOST: mask(env.smtpHost),
       SMTP_USER: mask(env.smtpUser),
       SMTP_PASS: mask(env.smtpPass),
