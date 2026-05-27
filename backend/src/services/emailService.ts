@@ -178,7 +178,9 @@ class EmailService {
 
     // Fallback to Resend
     if (this.resend) {
-      return this.sendViaResend(email, subject, html, text);
+      const success = await this.sendViaResend(email, subject, html, text);
+      if (success) return true;
+      console.warn(`[EmailService] Resend failed. Falling back to sandbox logs.`);
     }
 
     // Last resort: log to console (sandbox mode)
@@ -191,6 +193,7 @@ class EmailService {
     console.log(`\x1b[33mOTP Code:\x1b[0m \x1b[1m\x1b[32m${otp}\x1b[0m`);
     console.log("\x1b[35m%s\x1b[0m", "=================================================================");
     console.log("\n");
+    console.warn(`[EmailService] Active Email sending failed. Placed OTP ${otp} in logs for sandbox retrieval.`);
     return true;
   }
 

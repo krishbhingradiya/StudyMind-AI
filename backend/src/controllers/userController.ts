@@ -178,13 +178,17 @@ export async function verifyLoginOtp(req: Request, res: Response) {
     // Verify OTP
     const result = otpService.verifyOTP(email, otp);
     if (!result.success) {
+      console.warn(`[verifyLoginOtp] OTP verification failed for ${email}: ${result.error || "Invalid OTP"}`);
       return sendError(res, result.error || "Invalid or expired verification code.", 400);
     }
+
+    console.log(`[verifyLoginOtp] OTP successfully verified for ${email}`);
 
     // Sign in with Supabase to get session tokens
     const storedData = result.signupData;
     if (storedData?.password) {
       try {
+        console.log(`[verifyLoginOtp] Attempting backend Supabase sign-in for ${email}`);
         const tempClient = createClient(env.supabaseUrl, env.supabaseAnonKey || env.supabaseServiceKey, {
           auth: { autoRefreshToken: false, persistSession: false },
         });
@@ -195,6 +199,7 @@ export async function verifyLoginOtp(req: Request, res: Response) {
         });
 
         if (!signInError && authData?.session) {
+          console.log(`[verifyLoginOtp] Backend Supabase sign-in succeeded for ${email}`);
           return sendSuccess(res, {
             session: {
               access_token: authData.session.access_token,
@@ -211,9 +216,12 @@ export async function verifyLoginOtp(req: Request, res: Response) {
       } catch (err) {
         console.error("[verifyLoginOtp] Exception during sign-in:", (err as Error).message);
       }
+    } else {
+      console.warn(`[verifyLoginOtp] No stored password found for ${email}. Falling back to client-side sign-in.`);
     }
 
     // Fallback: OTP was valid but couldn't create session server-side
+    console.log(`[verifyLoginOtp] Returning verified success fallback (no session) for ${email}`);
     return sendSuccess(res, { verified: true }, "Verification successful!");
   } catch (err) {
     return sendError(res, (err as Error).message, 500);
@@ -283,9 +291,11 @@ export async function verifyOtp(req: Request, res: Response) {
     // Verify OTP
     const result = otpService.verifyOTP(email, otp);
     if (!result.success || !result.signupData) {
+      console.warn(`[verifyOtp] OTP verification failed for ${email}: ${result.error || "Invalid OTP"}`);
       return sendError(res, result.error || "Invalid or expired verification code.", 400);
     }
 
+    console.log(`[verifyOtp] OTP successfully verified for ${email}`);
     const signupData = result.signupData;
 
     let supabase;
@@ -299,6 +309,7 @@ export async function verifyOtp(req: Request, res: Response) {
     // 1. Create user in Supabase auth
     let authData, authError;
     try {
+      console.log(`[verifyOtp] Creating user in Supabase auth for ${email}`);
       const result = await supabase.auth.admin.createUser({
         email: signupData.email,
         password: signupData.password,
@@ -331,9 +342,12 @@ export async function verifyOtp(req: Request, res: Response) {
       return sendError(res, errorMessage, 400);
     }
 
+    console.log(`[verifyOtp] Supabase auth user successfully created with ID: ${authData.user.id}`);
+
     // 2. Create profile in users table
     let profileData, profileError;
     try {
+      console.log(`[verifyOtp] Creating profile in users table for ID: ${authData.user.id}`);
       const result = await supabase
         .from("users")
         .upsert({
@@ -362,9 +376,12 @@ export async function verifyOtp(req: Request, res: Response) {
       return sendError(res, "Failed to create user profile. Please try again.", 500);
     }
 
+    console.log(`[verifyOtp] Profile successfully created for ${email}`);
+
     // Try to sign in to generate session tokens so the frontend can login directly
     let session = null;
     try {
+      console.log(`[verifyOtp] Attempting initial sign-in for ${email}`);
       const tempClient = createClient(env.supabaseUrl, env.supabaseAnonKey || env.supabaseServiceKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
@@ -375,18 +392,22 @@ export async function verifyOtp(req: Request, res: Response) {
       });
 
       if (!signInError && signInData?.session) {
+        console.log(`[verifyOtp] Initial sign-in succeeded for ${email}`);
         session = {
           access_token: signInData.session.access_token,
           refresh_token: signInData.session.refresh_token,
           expires_in: signInData.session.expires_in,
           expires_at: signInData.session.expires_at,
         };
+      } else if (signInError) {
+        console.warn(`[verifyOtp] Initial sign-in failed: ${signInError.message}`);
       }
     } catch (err) {
       console.error("[verifyOtp] Exception during sign-in:", (err as Error).message);
     }
 
     // Send welcome email asynchronously
+    console.log(`[verifyOtp] Dispatching welcome email to ${signupData.email}`);
     emailService.sendWelcomeEmail(signupData.email, signupData.full_name || "Student").catch(console.error);
 
     return sendSuccess(
