@@ -150,37 +150,49 @@ class EmailService {
       subject = "StudyMind AI - Reset Your Password";
     }
 
+    console.log(`[EmailService] Initiating OTP send. Recipient: "${email}", OTP Code: "${otp}", Subject: "${subject}", Type: "${type}"`);
+
     const html = this.getOTPEmailHTML(otp, type);
     const text = `Your StudyMind AI Verification Code is: ${otp}. It is valid for 15 minutes.`;
 
     // Try Brevo first (HTTP-based API, bypasses SMTP blocks, supports custom sender)
     if (env.brevoApiKey) {
+      console.log(`[EmailService] Attempting delivery via Brevo HTTP API for recipient: ${email}`);
       const success = await this.sendViaBrevo(email, subject, html, text);
-      if (success) return true;
+      if (success) {
+        console.log(`[EmailService] Brevo API active email delivery succeeded for recipient: ${email}`);
+        return true;
+      }
+      console.warn(`[EmailService] Brevo API active email delivery failed for recipient: ${email}`);
     }
 
     // Try SMTP (sends from your configured Gmail/SMTP account)
     if (this.smtpTransporter) {
       try {
-        await this.smtpTransporter.sendMail({
+        console.log(`[EmailService] Attempting delivery via Nodemailer SMTP for recipient: ${email}`);
+        const info = await this.smtpTransporter.sendMail({
           from: env.smtpFrom,
           to: email,
           subject,
           text,
           html,
         });
-        console.log(`[EmailService] Email successfully sent to ${email} via SMTP`);
+        console.log(`[EmailService] SMTP email successfully sent to ${email}. Response MessageID: "${info.messageId}", Envelope:`, info.envelope);
         return true;
       } catch (err) {
-        console.error("[EmailService] SMTP failed, falling back to Resend:", (err as Error).message);
+        console.error(`[EmailService] SMTP failed for recipient ${email}, falling back to Resend. Error:`, err);
       }
     }
 
     // Fallback to Resend
     if (this.resend) {
+      console.log(`[EmailService] Attempting delivery via Resend HTTP API for recipient: ${email}`);
       const success = await this.sendViaResend(email, subject, html, text);
-      if (success) return true;
-      console.warn(`[EmailService] Resend failed. Falling back to sandbox logs.`);
+      if (success) {
+        console.log(`[EmailService] Resend API active email delivery succeeded for recipient: ${email}`);
+        return true;
+      }
+      console.warn(`[EmailService] Resend API active email delivery failed for recipient: ${email}`);
     }
 
     // Last resort: log to console (sandbox mode)
@@ -214,6 +226,8 @@ class EmailService {
         senderEmail = env.smtpFrom.trim().replace(/^['"]|['"]$/g, "");
       }
 
+      console.log(`[EmailService] Brevo API sending request details: Sender Name: "${senderName}", Sender Email: "${senderEmail}", Target Recipient: "${email}"`);
+
       const response = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
         headers: {
@@ -237,12 +251,15 @@ class EmailService {
         }),
       });
 
+      console.log(`[EmailService] Brevo API request dispatched. Response Status: ${response.status}`);
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Brevo API returned status ${response.status}: ${errorText}`);
       }
 
-      console.log(`[EmailService] Email sent to ${email} via Brevo API`);
+      const responseJson = await response.json().catch(() => ({}));
+      console.log(`[EmailService] Brevo API response body:`, responseJson);
       return true;
     } catch (err) {
       console.error("[EmailService] Brevo API failed:", (err as Error).message);
@@ -258,9 +275,8 @@ class EmailService {
   private async sendViaResend(email: string, subject: string, html: string, text?: string): Promise<boolean> {
     if (!this.resend) return false;
     try {
-      // Resend free tier ONLY allows sending from onboarding@resend.dev
-      // To use studymindai.admin@gmail.com, you must add + verify a custom domain in Resend
       const fromAddress = "StudyMind AI <onboarding@resend.dev>";
+      console.log(`[EmailService] Resend API sending request details: From: "${fromAddress}", Target Recipient: "${email}"`);
 
       const { data, error } = await this.resend.emails.send({
         from: fromAddress,
@@ -273,7 +289,7 @@ class EmailService {
         throw new Error(error.message);
       }
 
-      console.log(`[EmailService] Email sent to ${email} via Resend (ID: ${data?.id})`);
+      console.log(`[EmailService] Resend API success response. MessageID: "${data?.id}"`);
       return true;
     } catch (err) {
       console.error("[EmailService] Resend failed:", (err as Error).message);

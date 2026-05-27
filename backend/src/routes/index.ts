@@ -14,6 +14,7 @@ import { sendSuccess, sendError } from "../utils/apiResponse";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { env } from "../config/env";
 import { memoryLogs } from "../utils/logger";
+import { emailService } from "../services/emailService";
 
 import authRoutes from "./auth";
 
@@ -55,6 +56,39 @@ router.get("/debug/logs", (_req, res) => {
     success: true,
     logs: memoryLogs,
   });
+});
+
+// Diagnostic endpoint to manually trigger a test email
+router.post("/test-email", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, error: "Email is required in request body" });
+  }
+
+  console.log(`[Diagnostic] Received request to send a test email to ${email}`);
+  
+  try {
+    const success = await emailService.sendOTP(email, "888888", "login");
+    if (success) {
+      console.log(`[Diagnostic] Test email request processed successfully for ${email}`);
+      return res.json({
+        success: true,
+        message: `Verification code test email triggered successfully to ${email}. Check your inbox, spam, or the backend logs.`,
+      });
+    } else {
+      console.error(`[Diagnostic] Active email sending failed for ${email}`);
+      return res.status(500).json({
+        success: false,
+        error: "Active email sending failed. The OTP has been printed to the server logs instead (Sandbox Fallback).",
+      });
+    }
+  } catch (err) {
+    console.error(`[Diagnostic] Exception during test email sending:`, err);
+    return res.status(500).json({
+      success: false,
+      error: (err as Error).message,
+    });
+  }
 });
 
 // Auth
