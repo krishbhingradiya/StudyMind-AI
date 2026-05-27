@@ -99,7 +99,9 @@ ${material}`,
   let questions: QuizQuestion[];
   try {
     questions = parseJsonFromAI<QuizQuestion[]>(response);
-  } catch {
+  } catch (err) {
+    console.error(`[generateQuiz] Failed to parse AI JSON response:`, (err as Error).message);
+    console.error(`[generateQuiz] Raw AI Response was:`, response);
     throw new Error("AI returned invalid quiz format. Please try again.");
   }
   if (!Array.isArray(questions) || questions.length === 0) {
