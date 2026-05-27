@@ -271,7 +271,7 @@ ${materialsSnippet}`,
     const response = await generateAI(messages, {
       maxTokens: 2500,
       temperature: 0.4,
-      preferFast: true, // Crucial: use fast model (Gemini-2.5-Flash) for extreme speed (< 5s!)
+      preferFast: true, // Crucial: use fast model (gemini-1.5-flash) for extreme speed (< 5s!)
     });
 
     const rawParsed = parseJsonFromAI<GeneratedRoadmap>(response);

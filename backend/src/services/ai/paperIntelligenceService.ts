@@ -95,7 +95,7 @@ ${combinedTextsDigest}`
     const response = await generateAI(messages, {
       maxTokens: 2500,
       temperature: 0.35,
-      preferFast: true // Use Gemini-2.5-Flash for extreme speed (< 10 seconds target!)
+      preferFast: true // Use gemini-1.5-flash for extreme speed (< 10 seconds target!)
     });
 
     const parsed = parseJsonFromAI<any>(response);
