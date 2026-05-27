@@ -1,13 +1,29 @@
 import { createClient } from "@/lib/supabase/client";
 
-let rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-// Strip trailing slashes
-rawBaseUrl = rawBaseUrl.replace(/\/+$/, "");
-// Ensure API URL has the correct /api suffix
-if (!rawBaseUrl.endsWith("/api")) {
-  rawBaseUrl += "/api";
+// Build the API base URL robustly
+function buildApiUrl(): string {
+  let url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+  // Warn if the URL looks like a placeholder
+  if (url.includes("your-backend-url") || url.includes("your-render")) {
+    console.error(
+      "[StudyMind] NEXT_PUBLIC_API_URL is still a placeholder! " +
+      "Set it to your Render backend URL (e.g. https://studymind-ai-backend.onrender.com/api)"
+    );
+  }
+
+  // Strip trailing slashes
+  url = url.replace(/\/+$/, "");
+
+  // Ensure the URL ends with /api (but don't double-append)
+  if (!url.endsWith("/api")) {
+    url += "/api";
+  }
+
+  return url;
 }
-const API_URL = rawBaseUrl;
+
+const API_URL = buildApiUrl();
 
 async function getAuthToken(): Promise<string | null> {
   try {
@@ -43,7 +59,11 @@ async function apiRequest<T>(
 
   try {
     const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-    const res = await fetch(`${API_URL}${cleanEndpoint}`, { ...options, headers });
+    const res = await fetch(`${API_URL}${cleanEndpoint}`, {
+      ...options,
+      headers,
+      credentials: "include",
+    });
     const text = await res.text();
     let parsed: ApiResult<T>;
 
