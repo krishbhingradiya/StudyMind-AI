@@ -127,7 +127,12 @@ export default function SignupPage() {
           signedIn = true;
         } else {
           console.error("Failed to set session from backend tokens:", setSessionError.message);
-          toast.error(`Session Setup Error: ${setSessionError.message}`);
+          const currentUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "MISSING";
+          if (setSessionError.message.includes("Failed to fetch")) {
+            toast.error(`Session Setup Error: Failed to fetch. Please verify your Vercel environment variables! (Current Supabase URL: "${currentUrl}")`);
+          } else {
+            toast.error(`Session Setup Error: ${setSessionError.message}`);
+          }
         }
       }
 
@@ -140,7 +145,12 @@ export default function SignupPage() {
 
         if (signInError) {
           console.error("SignIn fallback failed:", signInError.message);
-          toast.error(`Auto-login failed: ${signInError.message}. Please log in manually.`);
+          const currentUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "MISSING";
+          if (signInError.message.includes("Failed to fetch")) {
+            toast.error(`Auto-login failed: Failed to fetch. Please verify your Vercel environment variables! (Current Supabase URL: "${currentUrl}")`);
+          } else {
+            toast.error(`Auto-login failed: ${signInError.message}. Please log in manually.`);
+          }
           router.push("/login");
           return;
         }
