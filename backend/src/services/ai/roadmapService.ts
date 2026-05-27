@@ -73,7 +73,8 @@ export type GeneratedRoadmap = z.infer<typeof generatedRoadmapSchema>;
 function daysUntilExam(examDate?: string): number {
   if (!examDate) return 28;
   const diff = new Date(examDate).getTime() - Date.now();
-  return Math.max(7, Math.min(28, Math.ceil(diff / (1000 * 60 * 60 * 24))));
+  const rawDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return Math.max(1, Math.min(28, rawDays));
 }
 
 function normalizeTopics(input: RoadmapGenerateInput): string[] {
@@ -101,10 +102,20 @@ function buildDeterministicFallback(input: RoadmapGenerateInput): GeneratedRoadm
   const verificationMethods: Array<GeneratedTask["verificationMethod"]> = ["timer", "practice", "mini_quiz", "writing"];
 
   const dailyTasks: GeneratedTask[] = Array.from({ length: tasksTarget }, (_, index) => {
-    const week = Math.min(4, Math.floor(index / 3) + 1);
+    const week = Math.min(4, Math.floor((index / tasksTarget) * 4) + 1);
     const phase = phases[week - 1];
     const topic = topics[index % topics.length] || input.topic || "Core concepts";
-    const dueDay = Math.min(days - 1, Math.floor((index * days) / tasksTarget));
+    
+    let dueDay = 0;
+    if (days >= 28) {
+      dueDay = (week - 1) * 7 + (index % 3);
+    } else {
+      const maxOffset = Math.max(0, days - 1);
+      dueDay = tasksTarget > 1 
+        ? Math.floor((index / (tasksTarget - 1)) * maxOffset)
+        : 0;
+    }
+
     const dueDate = new Date(startDate.getTime() + dueDay * 24 * 60 * 60 * 1000)
       .toISOString()
       .slice(0, 10);
@@ -112,7 +123,7 @@ function buildDeterministicFallback(input: RoadmapGenerateInput): GeneratedRoadm
     const taskType: GeneratedTask["taskType"] = index % 3 === 0 ? "study" : index % 3 === 1 ? "practice" : "quiz";
 
     return {
-      taskTitle: `Week ${week} ${phase}: Master ${topic}`,
+      taskTitle: `Phase ${week} ${phase}: Master ${topic}`,
       taskType,
       subject: input.subject,
       topic,
@@ -133,16 +144,23 @@ function buildDeterministicFallback(input: RoadmapGenerateInput): GeneratedRoadm
     goals: [`Master the ${phases[index]} phase topics and verify your progress via active recall.`],
   }));
 
+  const isShortTerm = days < 7;
+  const title = isShortTerm
+    ? `${input.subject} ${days}-Day Intensive Cram Plan`
+    : `${input.subject} ${days}-Day Study Roadmap`;
+
   return {
-    title: `${input.subject} 4-Week Roadmap (${input.university || "Personalized"})`,
+    title,
     dailyTasks,
     revisionSchedule,
     config: {
       weakTopics: input.weakTopics,
       preferredStyle: input.preferredStyle,
-      estimatedStudyHours: totalWeeks * 7 * input.dailyStudyHours * 0.8,
+      estimatedStudyHours: days * input.dailyStudyHours * 0.8,
       enhancements: {
-        strategy: "Start strong with Week 1 foundations, then verify through interactive tasks.",
+        strategy: isShortTerm 
+          ? "Focused high-yield learning with immediate active verification."
+          : "Start strong with Phase 1 foundations, then verify through interactive tasks.",
         weakTopicTips: ["Schedule daily revision blocks", "Write summaries using the Feynman Technique"],
         motivation: "Consistency builds compound knowledge.",
       },
@@ -158,17 +176,41 @@ export async function generateRoadmap(input: RoadmapGenerateInput): Promise<Gene
   const syllabusSnippet = input.syllabusText ? input.syllabusText.slice(0, 3000) : "No syllabus text provided.";
   const materialsSnippet = input.materialsText ? input.materialsText.slice(0, 3000) : "No material text provided.";
   
-  const estimatedHours = 4 * 7 * input.dailyStudyHours * 0.8;
+  const daysLeft = daysUntilExam(input.examDate);
+  const estimatedHours = daysLeft * input.dailyStudyHours * 0.8;
+
+  let timeConstraintMessage = "";
+  if (daysLeft < 7) {
+    timeConstraintMessage = `CRITICAL TIME CONSTRAINT: The user's exam is in exactly ${daysLeft} days! This is an intensive daily cram/revision plan. 
+Map the tasks to Weeks 1-4 for system layout compatibility, but write the task descriptions and phases as a progressive daily program:
+- Week 1 tasks = Phase 1 (Foundation): High-yield core axioms (due today, Day 0)
+- Week 2 tasks = Phase 2 (Advanced): Intensive practice and key topic study (due Tomorrow, Day 1)
+- Week 3 tasks = Phase 3 (Mastery): Targeted weak area revision (due Day 2)
+- Week 4 tasks = Phase 4 (Peak): Final cram, simulated mock quizzes, active recall (due Day 2/Day before exam)
+Each week should contain exactly 2-3 tasks, totaling 8-12 tasks overall. Ensure dueDate matches the progressive Day 0 to Day 2 timeline.`;
+  } else if (daysLeft < 28) {
+    timeConstraintMessage = `TIME CONSTRAINT: The user's exam is in ${daysLeft} days. This is a compressed study plan spanning ${daysLeft} days.
+Map the tasks to Weeks 1-4 for system layout compatibility, representing four progressive phases:
+- Week 1: Foundation (due early)
+- Week 2: Advanced study
+- Week 3: Weak topics review
+- Week 4: Final peak revision (due before the exam)
+Ensure all tasks have dueDates strictly before the exam date (within the next ${daysLeft} days).`;
+  } else {
+    timeConstraintMessage = `STANDARD PLAN: The user has 4 weeks or more until the exam. Create a personalized, hyper-specific 4-week study roadmap with balanced weekly progression.`;
+  }
 
   const messages = [
     {
       role: "system" as const,
-      content: `You are an expert university academic advisor. Create a personalized, hyper-specific 4-week study roadmap based on the syllabus and materials content.
+      content: `You are an expert university academic advisor. Create a personalized, hyper-specific study roadmap based on the syllabus and materials content.
+${timeConstraintMessage}
+
 Return ONLY a valid JSON object matching the GeneratedRoadmap structure. DO NOT wrap in markdown block. Just the raw JSON.
 
 Structure requirements:
 {
-  "title": "Semester ... [Subject] 4-Week Verified Plan",
+  "title": "${input.subject} Verified Plan (${daysLeft} Days)",
   "dailyTasks": [
     {
       "taskTitle": "Week 1 Foundation: ...",
@@ -203,12 +245,6 @@ Structure requirements:
     }
   }
 }
-
-Important Phase Rules:
-- Week 1: Foundation phase (basic concepts, timer/study tasks, written goals)
-- Week 2: Advanced phase (complex topics, practice/coding tasks, mock quizzes)
-- Week 3: Mastery phase (weak topic review, revision, conceptual writing)
-- Week 4: Peak phase (exam prep, full mock tests, final recall blocks)
 
 Generate exactly 8 to 12 tasks spread evenly across weeks 1-4. Ensure dueDate starts from today and moves forward. Keep descriptions under 15 words.`,
     },
@@ -246,9 +282,21 @@ ${materialsSnippet}`,
     if (parsed && Array.isArray(parsed.dailyTasks) && parsed.dailyTasks.length > 0) {
       // Post-process to ensure IDs, order, and dates are pristine
       const startDate = new Date();
+      const totalTasks = parsed.dailyTasks.length;
+
       parsed.dailyTasks = parsed.dailyTasks.map((t, idx) => {
-        const weekNum = t.week || Math.min(4, Math.floor(idx / 3) + 1);
-        const dayOffset = (weekNum - 1) * 7 + (idx % 3);
+        const weekNum = t.week || Math.min(4, Math.floor((idx / totalTasks) * 4) + 1);
+        
+        let dayOffset = 0;
+        if (daysLeft >= 28) {
+          dayOffset = (weekNum - 1) * 7 + (idx % 3);
+        } else {
+          const maxOffset = Math.max(0, daysLeft - 1);
+          dayOffset = totalTasks > 1 
+            ? Math.floor((idx / (totalTasks - 1)) * maxOffset)
+            : 0;
+        }
+
         const calcDate = new Date(startDate.getTime() + dayOffset * 24 * 60 * 60 * 1000);
         return {
           ...t,
@@ -268,7 +316,9 @@ ${materialsSnippet}`,
         preferredStyle: parsed.config?.preferredStyle || input.preferredStyle || "Balanced study modules",
         estimatedStudyHours: parsed.config?.estimatedStudyHours || estimatedHours,
         enhancements: parsed.config?.enhancements || {
-          strategy: "Focus on Week 1 foundations and leverage active recall before simulated exams.",
+          strategy: daysLeft < 7 
+            ? "Execute daily cram blocks and focus on high-yield recall tests."
+            : "Focus on Week 1 foundations and leverage active recall before simulated exams.",
           weakTopicTips: ["Formulate conceptual summaries", "Complete mock quizzes in weekly sessions"],
           motivation: "Success is built on daily study routines.",
         },

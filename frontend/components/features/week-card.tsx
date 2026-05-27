@@ -126,6 +126,7 @@ interface WeekCardProps {
   phaseTitle: string;
   phaseDesc: string;
   onVerify: (task: VerifiedRoadmapTask) => void;
+  isShortTerm?: boolean;
 }
 
 export function WeekCard({
@@ -137,6 +138,7 @@ export function WeekCard({
   phaseTitle,
   phaseDesc,
   onVerify,
+  isShortTerm = false,
 }: WeekCardProps) {
   const weekCompleted = weekTasks.filter((t) => t.completion_status === "completed").length;
   const weekProgress = weekTasks.length 
@@ -168,7 +170,7 @@ export function WeekCard({
               weekNum === 3 && "bg-purple-500/10 text-purple-500 border-purple-500/20",
               weekNum === 4 && "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
             )}>
-              Week {weekNum}
+              {isShortTerm ? `Phase ${weekNum}` : `Week ${weekNum}`}
             </span>
             <h4 className="font-extrabold text-lg text-foreground truncate">{phaseTitle}</h4>
           </div>
@@ -218,7 +220,7 @@ export function WeekCard({
                 <div className="rounded-xl border border-border/50 bg-background/50 p-4 space-y-2 shadow-inner">
                   <p className="text-xs font-extrabold uppercase text-primary tracking-wider flex items-center gap-1.5">
                     <BookOpen className="h-4 w-4 shrink-0" />
-                    Week {weekNum} Study Goals & Topics:
+                    {isShortTerm ? `Phase ${weekNum}` : `Week ${weekNum}`} Study Goals & Topics:
                   </p>
                   <div className="text-sm text-muted-foreground leading-relaxed grid gap-2">
                     <div>

@@ -17,41 +17,53 @@ export async function callOpenRouter(
 
   const model = modelOverride || env.openRouterModel;
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    signal,
-    headers: {
-      Authorization: `Bearer ${env.openRouterApiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": env.frontendUrl,
-      "X-Title": "StudyMind AI",
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens: options?.maxTokens ?? 4096,
-      temperature: options?.temperature ?? 0.7,
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`OpenRouter error: ${err}`);
+  const activeSignal = signal || controller.signal;
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      signal: activeSignal,
+      headers: {
+        Authorization: `Bearer ${env.openRouterApiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": env.frontendUrl,
+        "X-Title": "StudyMind AI",
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: options?.maxTokens ?? 4096,
+        temperature: options?.temperature ?? 0.7,
+      }),
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`OpenRouter error: ${err}`);
+    }
+
+    const data = (await response.json()) as {
+      choices?: {
+        message?: {
+          content?: string | null;
+        };
+      }[];
+    };
+
+    const text = (data.choices?.[0]?.message?.content || "").trim();
+
+    if (!text) {
+      throw new Error("OpenRouter returned an empty response");
+    }
+
+    return text;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
   }
-
-  const data = (await response.json()) as {
-    choices?: {
-      message?: {
-        content?: string | null;
-      };
-    }[];
-  };
-
-  const text = (data.choices?.[0]?.message?.content || "").trim();
-
-  if (!text) {
-    throw new Error("OpenRouter returned an empty response");
-  }
-
-  return text;
 }

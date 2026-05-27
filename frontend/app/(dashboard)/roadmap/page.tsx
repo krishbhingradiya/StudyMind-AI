@@ -94,6 +94,7 @@ export default function RoadmapPage() {
     if (!pollingId) return;
 
     const timer = setTimeout(async () => {
+      let shouldContinuePolling = true;
       try {
         const res = await api.getRoadmap(pollingId);
         if (res.success && res.data) {
@@ -107,21 +108,30 @@ export default function RoadmapPage() {
             queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
             queryClient.invalidateQueries({ queryKey: ["roadmap", fetchedRoadmap.id] });
             toast.success("AI Study Roadmap compiled successfully!");
+            shouldContinuePolling = false;
           } else if (fetchedRoadmap.status === "failed") {
             setPollingId(null);
             setPollCounter(0);
             toast.error("Roadmap generation failed. Please try again with shorter materials.");
-          } else {
-            // Still compiling, increment counter and trigger another poll
-            setPollCounter((c) => c + 1);
-            if (pollCounter > 60) {
-              setPollingId(null);
-              toast.error("Generation exceeded limit. Refresh the page to check status.");
-            }
+            shouldContinuePolling = false;
           }
+        } else {
+          console.warn("Polling API returned unsuccessful:", res.error);
         }
       } catch (err) {
         console.warn("Polling error:", err);
+      }
+
+      if (shouldContinuePolling) {
+        setPollCounter((c) => {
+          const nextCount = c + 1;
+          if (nextCount > 60) {
+            setPollingId(null);
+            toast.error("Generation exceeded limit. Refresh the page to check status.");
+            return 0;
+          }
+          return nextCount;
+        });
       }
     }, POLLING_INTERVAL_MS);
 
@@ -267,7 +277,19 @@ export default function RoadmapPage() {
     else tasksByWeek[1].push(t);
   });
 
-  const phases = [
+  const createdDate = activeRoadmap?.created_at ? new Date(activeRoadmap.created_at) : new Date();
+  const examDate = activeRoadmap?.exam_date ? new Date(activeRoadmap.exam_date) : null;
+  const daysTotal = examDate 
+    ? Math.ceil((examDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
+    : 28;
+  const isShortTerm = daysTotal > 0 && daysTotal < 7;
+
+  const phases = isShortTerm ? [
+    { name: "Phase 1: Foundation Focus", desc: "Kickstart with essential syllabus topics and foundational recall." },
+    { name: "Phase 2: Intensive Practice", desc: "Execute core practice challenges and check target problem spaces." },
+    { name: "Phase 3: Targeted Revision", desc: "Review identified weak areas and finalize difficult subjects." },
+    { name: "Phase 4: Exam Readiness", desc: "Complete mock quizzes, active timer sprints, and final peak recalls." },
+  ] : [
     { name: "Week 1: Foundation Phase", desc: "Build core syllabus axioms and review foundations." },
     { name: "Week 2: Advanced Phase", desc: "Tackle deep conceptual structures, code guides, and practical exercises." },
     { name: "Week 3: Mastery Phase", desc: "Target identified weak performance topics and execute flashcards." },
@@ -308,7 +330,9 @@ export default function RoadmapPage() {
 
           {/* Interactive accordion timeline block */}
           <div className="space-y-4 pt-2">
-            <h3 className="text-xl font-extrabold text-foreground tracking-tight">Interactive 4-Week Path</h3>
+            <h3 className="text-xl font-extrabold text-foreground tracking-tight">
+              {isShortTerm ? `Interactive ${daysTotal}-Day Path` : "Interactive 4-Week Path"}
+            </h3>
             
             <div className="space-y-4">
               {[1, 2, 3, 4].map((wk) => {
@@ -328,6 +352,7 @@ export default function RoadmapPage() {
                     phaseTitle={weekTitle}
                     phaseDesc={weekDesc}
                     onVerify={setVerifyTask}
+                    isShortTerm={isShortTerm}
                   />
                 );
               })}
