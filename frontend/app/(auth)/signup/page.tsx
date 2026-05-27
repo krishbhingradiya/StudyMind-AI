@@ -127,6 +127,7 @@ export default function SignupPage() {
           signedIn = true;
         } else {
           console.error("Failed to set session from backend tokens:", setSessionError.message);
+          toast.error(`Session Setup Error: ${setSessionError.message}`);
         }
       }
 
@@ -139,7 +140,7 @@ export default function SignupPage() {
 
         if (signInError) {
           console.error("SignIn fallback failed:", signInError.message);
-          toast.error("Account verified successfully! Please log in manually.");
+          toast.error(`Auto-login failed: ${signInError.message}. Please log in manually.`);
           router.push("/login");
           return;
         }

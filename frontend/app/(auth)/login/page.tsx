@@ -110,6 +110,7 @@ export default function LoginPage() {
           signedIn = true;
         } else {
           console.error("Failed to set session from backend tokens:", setSessionError.message);
+          toast.error(`Session Setup Error: ${setSessionError.message}`);
         }
       }
 
@@ -122,7 +123,7 @@ export default function LoginPage() {
 
         if (signInError) {
           console.error("SignIn fallback failed:", signInError.message);
-          toast.error("Login failed. Please try signing in again.");
+          toast.error(`Login failed: ${signInError.message}`);
           setStep("form");
           setOtp("");
           setIsVerifying(false);
