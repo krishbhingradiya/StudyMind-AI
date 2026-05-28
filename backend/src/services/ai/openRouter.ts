@@ -44,6 +44,9 @@ export async function callOpenRouter(
 
     if (!response.ok) {
       const err = await response.text();
+      if (response.status === 401) {
+        throw new Error("OpenRouter API key is unauthorized or invalid (401). Please verify the OPENROUTER_API_KEY environment variable on your server/Render dashboard.");
+      }
       throw new Error(`OpenRouter error: ${err}`);
     }
 
